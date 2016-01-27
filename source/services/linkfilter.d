@@ -19,6 +19,11 @@ class LinkFilter : ILinkFilter {
     }
 
     void addExtension(in string extension) {
+        if (this._matchExtensions.canFind(extension)) {
+            // If this extension already exists, don't add it again
+            return;
+        }
+
         this._matchExtensions ~= extension;
     }
 
