@@ -1,4 +1,5 @@
 import std.conv;
+import std.format;
 import std.net.curl;
 import std.stdio;
 
@@ -35,15 +36,6 @@ class ChandlerThread {
 
         this._parser = new FourChanThreadParser();
         this._linkFilter = new LinkFilter();
-        with (this._linkFilter) {
-            addExtension("ico");
-            addExtension("css");
-            addExtension("png");
-            addExtension("jpg");
-            addExtension("gif");
-            addExtension("webm");
-        }
-
         this._urlMapper = new URLMapper();
         this._downloader = new Downloader();
     }
@@ -53,6 +45,7 @@ class ChandlerThread {
     }
 
     void download() {
+        import std.datetime;
         import std.path;
 
         auto html = get(this._url);
@@ -80,13 +73,35 @@ class ChandlerThread {
             link.url = path;
         }
 
+        auto now = Clock.currTime(UTC()).toUnixTime();
+        std.file.write(buildPath(this._path, "%d.html.orig".format(now)), html);
+
         std.file.write(buildPath(this._path, "thread.html"), thread.getHtml());
     }
 }
 
+enum ProjectDirName = ".chandler";
+enum ThreadConfigName = "thread.json";
+
 struct ThreadConfig {
     string url;
     string[] downloadExtensions;
+}
+
+ChandlerThread createChandlerProject(in char[] url, in char[] path) {
+    auto chandler = new ChandlerThread(url, path);
+
+    // Add default extensions
+    with (chandler) {
+        includeExtension("ico");
+        includeExtension("css");
+        includeExtension("png");
+        includeExtension("jpg");
+        includeExtension("gif");
+        includeExtension("webm");
+    }
+
+    return chandler;
 }
 
 ChandlerThread loadChandlerProject(in char[] path) {
@@ -95,8 +110,8 @@ ChandlerThread loadChandlerProject(in char[] path) {
     import jsonserialized;
     import std.path;
 
-    auto projectDir = buildPath(path, ".chandler");
-    auto threadJsonPath = buildPath(projectDir, "thread.json");
+    auto projectDir = buildPath(path, ProjectDirName);
+    auto threadJsonPath = buildPath(projectDir, ThreadConfigName);
 
     // If project dir does not exist, create it
     if (!projectDir.exists())
@@ -124,8 +139,8 @@ void saveProject(ChandlerThread chandlerThread) {
     import std.path;
 
     auto downloadDir = chandlerThread.path;
-    auto projectDir = buildPath(downloadDir, ".chandler");
-    auto threadJsonPath = buildPath(projectDir, "thread.json");
+    auto projectDir = buildPath(downloadDir, ProjectDirName);
+    auto threadJsonPath = buildPath(projectDir, ThreadConfigName);
 
     ThreadConfig threadConfig;
     with (threadConfig) {
