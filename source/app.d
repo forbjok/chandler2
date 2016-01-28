@@ -7,7 +7,7 @@ import std.stdio;
 import std.net.curl;
 
 import breakhandler;
-import chandler;
+import chandlerproject;
 
 void main(string[] args)
 {

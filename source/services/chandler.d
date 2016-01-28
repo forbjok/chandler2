@@ -1,5 +1,5 @@
 import std.conv;
-import std.format;
+import std.datetime;
 import std.net.curl;
 import std.stdio;
 
@@ -29,6 +29,8 @@ class ChandlerThread {
     @property string[] downloadExtensions() {
         return this._linkFilter.extensions;
     }
+
+    void delegate(in char[] html, in SysTime time) threadDownloaded;
 
     this(in char[] url, in char[] path) {
         this._url = url.to!string;
@@ -73,8 +75,10 @@ class ChandlerThread {
             link.url = path;
         }
 
-        auto now = Clock.currTime(UTC()).toUnixTime();
-        std.file.write(buildPath(this._path, "%d.html.orig".format(now)), html);
+        auto now = Clock.currTime(UTC());
+
+        if (this.threadDownloaded !is null)
+            this.threadDownloaded(html, now);
 
         std.file.write(buildPath(this._path, "thread.html"), thread.getHtml());
     }

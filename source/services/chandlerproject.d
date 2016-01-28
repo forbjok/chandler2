@@ -1,4 +1,9 @@
 import std.conv;
+import std.file;
+import std.format;
+import stdx.data.json;
+import jsonserialized;
+import std.path;
 
 import chandler;
 
@@ -10,8 +15,21 @@ struct ThreadConfig {
     string[] downloadExtensions;
 }
 
+private void initializeProject(ChandlerThread chandler) {
+    auto projectDir = buildPath(chandler.path, ProjectDirName);
+    auto originalsPath = buildPath(projectDir, "originals");
+
+    chandler.threadDownloaded = (html, time) {
+        auto unixTime = time.toUnixTime();
+
+        mkdirRecurse(originalsPath);
+        std.file.write(buildPath(originalsPath, "%d.html".format(unixTime)), html);
+    };
+}
+
 ChandlerThread createChandlerProject(in char[] url, in char[] path) {
     auto chandler = new ChandlerThread(url, path);
+    chandler.initializeProject();
 
     // Add default extensions
     with (chandler) {
@@ -27,11 +45,6 @@ ChandlerThread createChandlerProject(in char[] url, in char[] path) {
 }
 
 ChandlerThread loadChandlerProject(in char[] path) {
-    import std.file;
-    import stdx.data.json;
-    import jsonserialized;
-    import std.path;
-
     auto projectDir = buildPath(path, ProjectDirName);
     auto threadJsonPath = buildPath(projectDir, ThreadConfigName);
 
@@ -47,6 +60,8 @@ ChandlerThread loadChandlerProject(in char[] path) {
     threadConfig.deserializeFromJSONValue(jsonConfig);
 
     auto chandler = new ChandlerThread(threadConfig.url, path);
+    chandler.initializeProject();
+
     foreach(ext; threadConfig.downloadExtensions) {
         chandler.includeExtension(ext);
     }
@@ -55,11 +70,6 @@ ChandlerThread loadChandlerProject(in char[] path) {
 }
 
 void saveProject(ChandlerThread chandlerThread) {
-    import std.file;
-    import stdx.data.json;
-    import jsonserialized;
-    import std.path;
-
     auto downloadDir = chandlerThread.path;
     auto projectDir = buildPath(downloadDir, ProjectDirName);
     auto threadJsonPath = buildPath(projectDir, ThreadConfigName);
