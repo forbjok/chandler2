@@ -6,22 +6,42 @@ import threadparser;
 
 import html;
 
+struct HTag {
+    string tag;
+    string[] linkAttributes;
+}
+
+enum LinkTags = [
+    HTag("link", ["href"]),
+    HTag("script", ["src"]),
+    HTag("a", ["href"]),
+    HTag("img", ["src"]),
+];
+
 class LinkFinder {
     private class Link : ILink {
-        private Node* node;
-        private string attrname;
+        private Node* _node;
+        private string _attr;
 
-        this(Node* node, in string attrname) {
-            this.node = node;
-            this.attrname = attrname;
+        this(Node* node, in string attr) {
+            this._node = node;
+            this._attr = attr;
+        }
+
+        @property string tag() {
+            return this._node.tag.to!string;
+        }
+
+        @property string attr() {
+            return this._attr;
         }
 
         @property string url() {
-            return this.node.attr(this.attrname).to!string;
+            return this._node.attr(this._attr).to!string;
         }
 
         @property string url(in string value) {
-            this.node.attr(this.attrname, value);
+            this._node.attr(this._attr, value);
             return value;
         }
     }
@@ -44,21 +64,12 @@ class LinkFinder {
         }
 
         /* Retrieve all links from the HTML in their raw form */
-
-        foreach(e; document.querySelectorAll("link", node)) {
-            addLink(e, "href");
-        }
-
-        foreach(e; document.querySelectorAll("script", node)) {
-            addLink(e, "src");
-        }
-
-        foreach(e; document.querySelectorAll("a", node)) {
-            addLink(e, "href");
-        }
-
-        foreach(e; document.querySelectorAll("img", node)) {
-            addLink(e, "src");
+        foreach(linkTag; LinkTags) {
+            foreach(e; document.querySelectorAll(linkTag.tag, node)) {
+                foreach(linkAttr; linkTag.linkAttributes) {
+                    addLink(e, linkAttr);
+                }
+            }
         }
 
         return links;

@@ -6,6 +6,8 @@ interface IThread {
 }
 
 interface ILink {
+    @property string tag();
+    @property string attr();
     @property string url();
     @property string url(in string value);
 }
