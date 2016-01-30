@@ -21,9 +21,7 @@ class FourChanThread : IThread {
         auto doc = this.document;
         auto rootURL = this.url.parseURL();
 
-        auto linkFinder = new LinkFinder();
-        auto links = linkFinder.findLinks(&doc, doc.root);
-
+        auto links = findLinks(&doc, doc.root);
         return links;
     }
 
