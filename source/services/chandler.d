@@ -1,5 +1,5 @@
 import std.conv;
-import std.datetime;
+import std.datetime : SysTime;
 import std.net.curl;
 import std.stdio;
 
@@ -8,15 +8,25 @@ import fourchan;
 import linkfilter;
 import threadparser;
 import reurl;
-import urlmapper;
+
+string defaultMapURL(in char[] url) {
+    import std.path;
+    import std.string;
+
+    auto purl = text(url).parseURL();
+    auto path = purl.hostname ~ purl.path.replace("/", dirSeparator);
+
+    return path.to!string;
+}
 
 class ChandlerThread {
-    private string _url;
-    private string _path;
-    private IThreadParser _parser;
-    private LinkFilter _linkFilter;
-    private IURLMapper _urlMapper;
-    private IDownloader _downloader;
+    private {
+        string _url;
+        string _path;
+        IThreadParser _parser;
+        LinkFilter _linkFilter;
+        IDownloader _downloader;
+    }
 
     @property string url() {
         return this._url;
@@ -30,16 +40,21 @@ class ChandlerThread {
         return this._linkFilter.extensions;
     }
 
+    string delegate(in char[] url) mapURL;
+
     void delegate(in char[] html, in SysTime time) threadDownloaded;
 
     this(in char[] url, in char[] path) {
+        import std.functional;
+
         this._url = url.to!string;
         this._path = path.to!string;
 
         this._parser = new FourChanThreadParser();
         this._linkFilter = new LinkFilter();
-        this._urlMapper = new URLMapper();
         this._downloader = new Downloader();
+
+        this.mapURL = toDelegate(&defaultMapURL);
     }
 
     void includeExtension(in string extension) {
@@ -47,7 +62,7 @@ class ChandlerThread {
     }
 
     void download() {
-        import std.datetime;
+        import std.datetime : Clock, UTC;
         import std.path;
 
         auto html = get(this._url);
@@ -61,7 +76,7 @@ class ChandlerThread {
             if (!this._linkFilter.match(absoluteUrl))
                 continue;
 
-            auto path = this._urlMapper.mapURL(absoluteUrl);
+            auto path = this.mapURL(absoluteUrl);
             auto destinationPath = buildPath(this._path, path);
 
             try {
@@ -72,7 +87,7 @@ class ChandlerThread {
                 continue;
             }
 
-            link.url = path;
+            link.url = path.to!string;
         }
 
         auto now = Clock.currTime(UTC());
