@@ -24,7 +24,7 @@ class ChandlerThread {
         string _url;
         string _path;
         IThreadParser _parser;
-        LinkFilter _linkFilter;
+        string[] _downloadExtensions;
         IDownloader _downloader;
     }
 
@@ -37,7 +37,7 @@ class ChandlerThread {
     }
 
     @property string[] downloadExtensions() {
-        return this._linkFilter.extensions;
+        return this._downloadExtensions;
     }
 
     string delegate(in char[] url) mapURL;
@@ -51,14 +51,20 @@ class ChandlerThread {
         this._path = path.to!string;
 
         this._parser = new FourChanThreadParser();
-        this._linkFilter = new LinkFilter();
         this._downloader = new Downloader();
 
         this.mapURL = toDelegate(&defaultMapURL);
     }
 
     void includeExtension(in string extension) {
-        this._linkFilter.addExtension(extension);
+        import std.algorithm.searching;
+
+        if (this._downloadExtensions.canFind(extension)) {
+            // If this extension already exists, don't add it again
+            return;
+        }
+
+        this._downloadExtensions ~= extension;
     }
 
     void download() {
@@ -73,7 +79,7 @@ class ChandlerThread {
         foreach(link; links) {
             auto absoluteUrl = (pBaseURL ~ link.url).toString();
 
-            if (!this._linkFilter.match(absoluteUrl))
+            if (!absoluteUrl.linkHasExtension(this._downloadExtensions))
                 continue;
 
             auto path = this.mapURL(absoluteUrl);
