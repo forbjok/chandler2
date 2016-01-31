@@ -16,7 +16,7 @@ private int getPostId(in Node* node) {
     auto id = node.attr("id");
     auto m = id.matchFirst(re);
     if (m.empty)
-        throw new Exception("Node is not a post container!");
+        throw new Exception("Node is not a post container.");
 
     return m[1].to!int;
 }
@@ -47,7 +47,6 @@ class FourChanThread : IThread {
     UpdateResult update(in char[] newHtml) {
         import std.algorithm.iteration;
         import std.algorithm.setops;
-        import std.stdio;
 
         ILink[] newLinks;
 
@@ -67,7 +66,9 @@ class FourChanThread : IThread {
         // Get a list of all new post IDs
         auto newPostsIds = setDifference(updatePosts, posts).array();
 
-        writeln("Added posts (", posts.length , " => ", updatePosts.length , "): ", newPostsIds);
+        // Create convenience variables
+        auto doc = &this._document;
+        auto threadNode = this._threadNode;
 
         if (newPostsIds.length > 0) {
             foreach(newPostId; newPostsIds) {
@@ -77,15 +78,15 @@ class FourChanThread : IThread {
                    from existing HTML in htmld, create an empty dummy element and set its
                    inner HTML to the HTML of the updated post and get the newly
                    created post element by retrieving its first child element. */
-                auto dummyElement = this._document.createElement("div");
+                auto dummyElement = doc.createElement("div");
                 dummyElement.html = updatePost.outerHTML;
                 auto newPost = dummyElement.firstChild();
 
                 // Append the new post to the thread node
-                this._threadNode.appendChild(newPost);
+                threadNode.appendChild(newPost);
 
                 // Find links in the newly appended post and add them to the list
-                newLinks ~= findLinks(&this._document, newPost);
+                newLinks ~= findLinks(doc, newPost);
             }
         }
 
@@ -93,13 +94,20 @@ class FourChanThread : IThread {
     }
 
     private Node*[] getAllPosts() {
-        return this._threadNode.children().map!(p => cast(Node*) p).array();
+        // Get all post containers inside the thread node (which should be all posts)
+        auto posts = this._document.querySelectorAll("div.postContainer", this._threadNode)
+            .map!(p => cast(Node*) p)
+            .array();
+
+        return posts;
     }
 
-    private Node* getPost(int id) {
+    private Node* getPost(in int id) {
         import std.format;
 
+        // Query post container element by ID
         auto postNode = this._document.querySelector("#pc%d".format(id), this._threadNode);
+
         return postNode;
     }
 }

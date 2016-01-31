@@ -2,7 +2,6 @@ import std.conv;
 import std.file;
 import std.format;
 import stdx.data.json;
-import jsonserialized;
 import std.path;
 
 import chandler;
@@ -59,6 +58,8 @@ class ChandlerProject : ChandlerThread {
 
     /* Load project from a path */
     static ChandlerProject load(in char[] path) {
+        import jsonserialized;
+
         auto projectDir = buildPath(path, ProjectDirName);
 
         if (!projectDir.exists())
@@ -84,6 +85,8 @@ class ChandlerProject : ChandlerThread {
 
     /* Save project configuration */
     void save() {
+        import jsonserialized;
+
         ThreadConfig threadConfig;
         with (threadConfig) {
             url = this.url;
@@ -107,6 +110,7 @@ class ChandlerProject : ChandlerThread {
         import std.algorithm.sorting;
         import std.array;
         import std.file;
+        import std.stdio;
         import std.string;
 
         auto threadHTMLPath = buildPath(this.path, "thread.html");
@@ -122,10 +126,10 @@ class ChandlerProject : ChandlerThread {
             .array()
             .sort();
 
+        writeln("Rebuilding thread from originals...");
         foreach(filename; originalFilenames)
         {
-            import std.stdio;
-            writeln("Rebuilding ", filename);
+            writefln("Processing %s...", filename.baseName);
 
             auto html = readText(filename);
             this.processHTML(html);

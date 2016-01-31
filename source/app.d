@@ -22,6 +22,17 @@ void main(string[] args)
     //auto chandl = createChandlerProject(baseURL, basePath);
     //chandl.saveProject();
     auto chandl = ChandlerProject.load(basePath);
+
+    // Print info when a thread update occurred
+    chandl.threadUpdated = (updateResult) {
+        writefln("%d new posts found.", updateResult.newPosts.length);
+    };
+
+    // Print error message if a link download fails
+    chandl.linkDownloadFailed = (url, message) {
+        writefln("Failed to download file: [%s]: %s.", url, message);
+    };
+
     //chandl.download();
     chandl.rebuild();
 }

@@ -1,7 +1,6 @@
 import std.conv;
 import std.datetime : SysTime;
 import std.net.curl;
-import std.stdio;
 
 import downloader;
 import fourchan;
@@ -43,6 +42,8 @@ class ChandlerThread {
     string delegate(in char[] url) mapURL;
 
     void delegate(in char[] html, in SysTime time) threadDownloaded;
+    void delegate(in UpdateResult updateResult) threadUpdated;
+    void delegate(in char[] url, in char[] message) linkDownloadFailed;
 
     this(in char[] url, in char[] path) {
         import std.functional;
@@ -90,7 +91,6 @@ class ChandlerThread {
         if (outputHTMLPath.exists()) {
             /* If the output file already exists, update the existing
                file with new posts from the HTML. */
-            writeln("Updating existing...");
             auto baseHTML = readText(outputHTMLPath);
             auto baseThread = this._parser.parseThread(baseHTML);
 
@@ -99,12 +99,14 @@ class ChandlerThread {
             // Process new links
             this.processLinks(updateResult.newLinks);
 
+            if (this.threadUpdated !is null)
+                this.threadUpdated(updateResult);
+
             outputHTML = baseThread.getHtml();
         }
         else {
             /* If the output file was not found, parse and process it
                in its entirety. */
-            writeln("Creating new...");
             auto thread = this._parser.parseThread(html);
             auto links = thread.getLinks();
 
@@ -134,7 +136,11 @@ class ChandlerThread {
                 this._downloader.download(absoluteUrl, destinationPath);
             }
             catch(Exception ex) {
-                writefln("Failed to download file: [%s]: %s.", absoluteUrl, ex.msg);
+                import std.format;
+
+                if (this.linkDownloadFailed !is null)
+                    this.linkDownloadFailed(absoluteUrl, ex.msg);
+
                 continue;
             }
 
