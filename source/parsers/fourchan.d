@@ -23,16 +23,6 @@ private int getPostId(in Node* node) {
 
 class FourChanThread : IThread {
     private {
-        struct Post {
-            Node* node;
-            int id;
-
-            this(Node* node) {
-                this.node = node;
-                this.id = node.getPostId();
-            }
-        }
-
         Document _document;
         Node* _threadNode;
     }
@@ -57,52 +47,83 @@ class FourChanThread : IThread {
     UpdateResult update(in char[] newHtml) {
         import std.algorithm.iteration;
         import std.algorithm.setops;
-
-        string[] newLinks;
-
-        auto oldPosts = this.getAllPosts().map!(p => p.id).array();
-
-        auto newThread = new FourChanThread(newHtml);
-        auto newPosts = newThread.getAllPosts().map!(p => p.id).array();
-
-        auto addedPosts = setDifference(newPosts, oldPosts);
-
         import std.stdio;
+
+        ILink[] newLinks;
+
+        writeln("GOP");
+        auto oldPosts = this.getAllPosts()
+            .map!(p => p.getPostId())
+            .array();
+
+        writeln("GNP");
+        auto newThread = new FourChanThread(newHtml);
+        auto newPosts = newThread.getAllPosts()
+            .map!(p => p.getPostId())
+            .array();
+
+        auto addedPosts = setDifference(newPosts, oldPosts).array();
+
         writeln("Added posts (", oldPosts.length , " => ", newPosts.length , "): ", addedPosts);
 
+        if (addedPosts.length == 0) {
+            return new UpdateResult(newLinks);
+        }
+
+        writeln("FCA");
+        // Find common ancestor post
+        Node* oldCommonAncestor;
+        auto newCommonAncestor = newThread.getPost(addedPosts[0]);
+        while (oldCommonAncestor is null && newCommonAncestor !is null) {
+            oldCommonAncestor = this.getPost(newCommonAncestor.getPostId());
+            newCommonAncestor = newCommonAncestor.previousSibling;
+            writeln("NCA ", newCommonAncestor);
+        }
+
+        if (oldCommonAncestor is null) {
+            throw new Exception("Common ancestor not found.");
+        }
+
+        writeln("FoundCA");
         foreach(postId; addedPosts) {
-            auto lastCommonAncestorPostId = oldPosts
-                .filter!(p => p < postId)
-                .array()[$-1];
+            auto addedPost = newThread.getPost(postId);
+            writeln("a");
+            auto dummyElement = this._document.createElement("div");
+            writeln("b");
+            dummyElement.html = addedPost.outerHTML;
+            auto newOldPost = dummyElement.firstChild();
+            writeln("c");
 
-            auto post = newThread.getPost(postId);
-            auto oldCommonAncestor = this.getPost(lastCommonAncestorPostId);
+            writeln("APC ", postId);
+            this._threadNode.appendChild(newOldPost);
 
-            auto newOldPost = this._document.createElement("div");
-            //newOldPost.html = post.node.html;
-
-            writeln("CA ", lastCommonAncestorPostId);
-            //oldCommonAncestor.node.insertAfter(newOldPost);
+            newLinks ~= findLinks(&this._document, newOldPost);
         }
 
         auto result = new UpdateResult(newLinks);
         return result;
     }
 
-    private Post[] getAllPosts() {
-        auto posts = this._threadNode.children()
-            .map!(p => Post(p))
-            .array()
-            .sort!("a.id < b.id")
-            .array();
-
-        return posts;
+    private Node*[] getAllPosts() {
+        return this._threadNode.children().map!(p => cast(Node*) p).array();
     }
 
-    private Post getPost(int id) {
-        auto postNode = this._document.querySelector("div.postContainer", this._threadNode);
+    /*
+    private bool hasPost(int id) {
+        auto postNode = this._document.querySelector("#pc%d".format(id), this._threadNode);
 
-        return Post(postNode);
+        return postNode !is null;
+    }*/
+
+    private Node* getPost(int id) {
+        import std.format;
+
+        auto postNode = this._document.querySelector("#pc%d".format(id), this._threadNode);
+        /*if (postNode is null) {
+            throw new PostNotFoundException(id);
+        }*/
+
+        return postNode;
     }
 }
 

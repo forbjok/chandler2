@@ -19,9 +19,9 @@ interface IThreadParser {
 }
 
 class UpdateResult {
-    string[] newLinks;
+    ILink[] newLinks;
 
-    this(string[] newLinks) {
+    this(ILink[] newLinks) {
         this.newLinks = newLinks;
     }
 }

@@ -98,7 +98,11 @@ class ChandlerThread {
             auto baseHTML = readText(outputHTMLPath);
             auto baseThread = this._parser.parseThread(baseHTML);
 
-            baseThread.update(html);
+            auto updateResult = baseThread.update(html);
+
+            // Process new links
+            this.processLinks(updateResult.newLinks);
+
             outputHTML = baseThread.getHtml();
         }
         else {
