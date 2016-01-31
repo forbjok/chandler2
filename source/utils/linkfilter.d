@@ -19,12 +19,14 @@ bool linkHasExtension(in char[] link, in string[] extensions) {
 }
 
 unittest {
-    immutable string link1 = "http://test.com/dir/index.html?param=value#fragment";
-    immutable string link2 = "http://test.com/dir/image1.png?param=value#fragment";
-    immutable string link3 = "http://test.com/dir/image2.jpg?param=value#fragment";
-    immutable string[] extensions = ["png", "jpg"];
+    import dunit.toolkit;
 
-    assert(!link1.linkHasExtension(extensions));
-    assert(link2.linkHasExtension(extensions));
-    assert(link3.linkHasExtension(extensions));
+    enum link1 = "http://test.com/dir/index.html?param=value#fragment";
+    enum link2 = "http://test.com/dir/image1.png?param=value#fragment";
+    enum link3 = "http://test.com/dir/image2.jpg?param=value#fragment";
+    enum extensions = ["png", "jpg"];
+
+    link1.linkHasExtension(extensions).assertFalse();
+    link2.linkHasExtension(extensions).assertTrue();
+    link3.linkHasExtension(extensions).assertTrue();
 }
