@@ -2,7 +2,6 @@ import std.conv;
 import std.datetime : SysTime;
 import std.net.curl;
 
-import downloader;
 import fourchan;
 import linkfilter;
 import threadparser;
@@ -18,13 +17,28 @@ string defaultMapURL(in char[] url) {
     return path.to!string;
 }
 
+void curlDownload(in string url, in string destinationPath) {
+    import std.file;
+    import std.net.curl;
+    import std.path;
+
+    // Ensure that destination directory exists
+    auto destinationDir = destinationPath.dirName();
+    mkdirRecurse(destinationDir);
+
+    // If an exception is thrown during download, delete the broken file
+    scope(failure) std.file.remove(destinationPath);
+
+    // Download file
+    download(url, destinationPath);
+}
+
 class ChandlerThread {
     private {
         string _url;
         string _path;
         IThreadParser _parser;
         string[] _downloadExtensions;
-        IDownloader _downloader;
     }
 
     @property string url() {
@@ -39,10 +53,14 @@ class ChandlerThread {
         return this._downloadExtensions;
     }
 
+    // Customizable functions
     string delegate(in char[] url) mapURL;
+    void delegate(in string url, in string destinationPath) downloadLink;
 
+    // Events
     void delegate(in char[] html, in SysTime time) threadDownloaded;
     void delegate(in UpdateResult updateResult) threadUpdated;
+    void delegate(in char[] url, in char[] destinationFile) linkDownloaded;
     void delegate(in char[] url, in char[] message) linkDownloadFailed;
 
     this(in char[] url, in char[] path) {
@@ -52,9 +70,9 @@ class ChandlerThread {
         this._path = path.to!string;
 
         this._parser = new FourChanThreadParser();
-        this._downloader = new Downloader();
 
         this.mapURL = toDelegate(&defaultMapURL);
+        this.downloadLink = toDelegate(&curlDownload);
     }
 
     void includeExtension(in string extension) {
@@ -121,6 +139,8 @@ class ChandlerThread {
     }
 
     private void processLinks(ILink[] links) {
+        import std.file;
+
         auto pBaseURL = this._url.parseURL();
 
         foreach(link; links) {
@@ -132,8 +152,19 @@ class ChandlerThread {
             auto path = this.mapURL(absoluteUrl);
             auto destinationPath = buildPath(this._path, path);
 
+            // Update link to local relative path
+            link.url = path.to!string;
+
+            // If destination file already exists, skip it
+            if (destinationPath.exists())
+                continue;
+
             try {
-                this._downloader.download(absoluteUrl, destinationPath);
+                // Download file
+                this.downloadLink(absoluteUrl, destinationPath);
+
+                if (this.linkDownloaded !is null)
+                    this.linkDownloaded(absoluteUrl, destinationPath);
             }
             catch(Exception ex) {
                 import std.format;
@@ -143,8 +174,6 @@ class ChandlerThread {
 
                 continue;
             }
-
-            link.url = path.to!string;
         }
     }
 }

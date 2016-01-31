@@ -29,6 +29,11 @@ void main(string[] args)
     };
 
     // Print error message if a link download fails
+    chandl.linkDownloaded = (url, destinationFile) {
+        writefln("%s downloaded.", url);
+    };
+
+    // Print error message if a link download fails
     chandl.linkDownloadFailed = (url, message) {
         writefln("Failed to download file: [%s]: %s.", url, message);
     };
