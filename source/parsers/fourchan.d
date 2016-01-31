@@ -21,25 +21,6 @@ private int getPostId(in Node* node) {
     return m[1].to!int;
 }
 
-private Node* getLastCommonPost(FourChanThread oldThread, FourChanThread newThread, int firstNewPostId) {
-    /* In order to add new posts from the updated HTML, we need to find
-       the last common post between the two HTMLs. We do this by starting
-       at the first new post and going backwards until we find a post that
-       exists in the current thread. */
-    Node* lastCommonPost;
-    auto newPost = newThread.getPost(firstNewPostId);
-    while (lastCommonPost is null && newPost !is null) {
-        lastCommonPost = oldThread.getPost(newPost.getPostId());
-        newPost = newPost.previousSibling;
-    }
-
-    if (lastCommonPost is null) {
-        throw new NoCommonPostException();
-    }
-
-    return lastCommonPost;
-}
-
 class FourChanThread : IThread {
     private {
         Document _document;
@@ -115,21 +96,10 @@ class FourChanThread : IThread {
         return this._threadNode.children().map!(p => cast(Node*) p).array();
     }
 
-    /*
-    private bool hasPost(int id) {
-        auto postNode = this._document.querySelector("#pc%d".format(id), this._threadNode);
-
-        return postNode !is null;
-    }*/
-
     private Node* getPost(int id) {
         import std.format;
 
         auto postNode = this._document.querySelector("#pc%d".format(id), this._threadNode);
-        /*if (postNode is null) {
-            throw new PostNotFoundException(id);
-        }*/
-
         return postNode;
     }
 }
