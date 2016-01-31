@@ -1,5 +1,3 @@
-import std.format;
-
 interface IThread {
     const(char)[] getHtml();
     ILink[] getLinks();

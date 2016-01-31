@@ -19,8 +19,8 @@ void main(string[] args)
 
     handleBreak();
 
-    //auto chandl = createChandlerProject(baseURL, basePath);
-    //chandl.saveProject();
+    //auto chandl = ChandlerProject.create(basePath, baseURL);
+    //chandl.save();
     auto chandl = ChandlerProject.load(basePath);
 
     // Print info when a thread update occurred
