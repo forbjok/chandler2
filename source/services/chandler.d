@@ -69,12 +69,25 @@ class ChandlerThread {
 
     void download() {
         import std.datetime : Clock, UTC;
-        import std.path;
 
         auto html = get(this._url);
+
+        auto now = Clock.currTime(UTC());
+
+        if (this.threadDownloaded !is null)
+            this.threadDownloaded(html, now);
+
+        this.process(html);
+    }
+
+    protected void process(in char[] html) {
+        import std.path;
+
         auto thread = this._parser.parseThread(this._url, html);
         auto links = thread.getLinks();
         auto pBaseURL = this._url.parseURL();
+
+        //foreach(p; thread.get)
 
         foreach(link; links) {
             auto absoluteUrl = (pBaseURL ~ link.url).toString();
@@ -95,11 +108,6 @@ class ChandlerThread {
 
             link.url = path.to!string;
         }
-
-        auto now = Clock.currTime(UTC());
-
-        if (this.threadDownloaded !is null)
-            this.threadDownloaded(html, now);
 
         std.file.write(buildPath(this._path, "thread.html"), thread.getHtml());
     }

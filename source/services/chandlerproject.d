@@ -9,84 +9,118 @@ import chandler;
 
 enum ProjectDirName = ".chandler";
 enum ThreadConfigName = "thread.json";
+enum OriginalsDirName = "originals";
 
 struct ThreadConfig {
     string url;
     string[] downloadExtensions;
 }
 
-private void initializeProject(ChandlerThread chandler) {
-    auto projectDir = buildPath(chandler.path, ProjectDirName);
-    auto originalsPath = buildPath(projectDir, "originals");
-
-    chandler.threadDownloaded = (html, time) {
-        auto unixTime = time.toUnixTime();
-
-        mkdirRecurse(originalsPath);
-        std.file.write(buildPath(originalsPath, "%d.html".format(unixTime)), html);
-    };
-}
-
-ChandlerThread createChandlerProject(in char[] url, in char[] path) {
-    auto chandler = new ChandlerThread(url, path);
-    chandler.initializeProject();
-
-    // Add default extensions
-    with (chandler) {
-        includeExtension("ico");
-        includeExtension("css");
-        includeExtension("png");
-        includeExtension("jpg");
-        includeExtension("gif");
-        includeExtension("webm");
+class ChandlerProject : ChandlerThread {
+    private {
+        string _projectDir;
+        string _originalsPath;
+        string _threadConfigPath;
     }
 
-    return chandler;
-}
+    private this(in char[] url, in char[] path, in char[] projectDir) {
+        super(url, path);
 
-ChandlerThread loadChandlerProject(in char[] path) {
-    auto projectDir = buildPath(path, ProjectDirName);
-    auto threadJsonPath = buildPath(projectDir, ThreadConfigName);
+        this._projectDir = projectDir.to!string;
+        this._originalsPath = buildPath(this._projectDir, OriginalsDirName);
+        this._threadConfigPath = buildPath(this._projectDir, ThreadConfigName);
 
-    // If project dir does not exist, create it
-    if (!projectDir.exists())
-        throw new Exception("Chandler project not found in: " ~ path.to!string);
+        this.threadDownloaded = (html, time) {
+            auto unixTime = time.toUnixTime();
 
-    // Read JSON configuration file
-    auto threadJson = readText(threadJsonPath);
-    auto jsonConfig = threadJson.toJSONValue();
-
-    ThreadConfig threadConfig;
-    threadConfig.deserializeFromJSONValue(jsonConfig);
-
-    auto chandler = new ChandlerThread(threadConfig.url, path);
-    chandler.initializeProject();
-
-    foreach(ext; threadConfig.downloadExtensions) {
-        chandler.includeExtension(ext);
+            mkdirRecurse(this._originalsPath);
+            std.file.write(buildPath(this._originalsPath, "%d.html".format(unixTime)), html);
+        };
     }
 
-    return chandler;
-}
+    static ChandlerProject create(in char[] path, in char[] url) {
+        auto projectDir = buildPath(path, ProjectDirName);
 
-void saveProject(ChandlerThread chandlerThread) {
-    auto downloadDir = chandlerThread.path;
-    auto projectDir = buildPath(downloadDir, ProjectDirName);
-    auto threadJsonPath = buildPath(projectDir, ThreadConfigName);
+        auto project = new ChandlerProject(url, path, projectDir);
 
-    ThreadConfig threadConfig;
-    with (threadConfig) {
-        url = chandlerThread.url;
-        downloadExtensions = chandlerThread.downloadExtensions;
+        // Add default extensions
+        with (project) {
+            includeExtension("ico");
+            includeExtension("css");
+            includeExtension("png");
+            includeExtension("jpg");
+            includeExtension("gif");
+            includeExtension("webm");
+        }
+
+        return project;
     }
 
-    // If project dir does not exist, create it
-    if (!projectDir.exists())
-        mkdirRecurse(projectDir);
+    static ChandlerProject load(in char[] path) {
+        auto projectDir = buildPath(path, ProjectDirName);
 
-    // Serialize configuration to JSON
-    auto jsonConfig = threadConfig.serializeToJSONValue();
+        if (!projectDir.exists())
+            throw new Exception("Chandler project not found in: " ~ path.to!string);
 
-    // Write thread JSON to file
-    write(threadJsonPath, cast(void[])jsonConfig.toJSON());
+        auto threadJsonPath = buildPath(projectDir, ThreadConfigName);
+
+        // Read JSON configuration file
+        auto threadJson = readText(threadJsonPath);
+        auto jsonConfig = threadJson.toJSONValue();
+
+        ThreadConfig threadConfig;
+        threadConfig.deserializeFromJSONValue(jsonConfig);
+
+        auto project = new ChandlerProject(threadConfig.url, path, projectDir);
+
+        foreach(ext; threadConfig.downloadExtensions) {
+            project.includeExtension(ext);
+        }
+
+        return project;
+    }
+
+    void save() {
+        ThreadConfig threadConfig;
+        with (threadConfig) {
+            url = this.url;
+            downloadExtensions = this.downloadExtensions;
+        }
+
+        // If project dir does not exist, create it
+        if (!this._projectDir.exists())
+            mkdirRecurse(this._projectDir);
+
+        // Serialize configuration to JSON
+        auto jsonConfig = threadConfig.serializeToJSONValue();
+
+        // Write thread JSON to file
+        write(this._threadConfigPath, cast(void[])jsonConfig.toJSON());
+    }
+
+    /* Rebuild thread from original htmls */
+    void rebuild() {
+        import std.algorithm.iteration;
+        import std.algorithm.sorting;
+        import std.array;
+        import std.file;
+        import std.string;
+
+        /* Fetch a list of all original htmls sorted by name
+           (which is a unix timestamp, and should be in download order) */
+        auto originalFilenames = this._originalsPath.dirEntries(SpanMode.shallow)
+            .filter!(e => e.isFile && e.name.endsWith(".html"))
+            .map!(e => e.name)
+            .array()
+            .sort();
+
+        foreach(filename; originalFilenames)
+        {
+            import std.stdio;
+            writeln("Rebuilding ", filename);
+
+            auto html = readText(filename);
+            this.process(html);
+        }
+    }
 }

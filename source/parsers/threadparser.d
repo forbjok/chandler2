@@ -1,3 +1,5 @@
+import std.format;
+
 interface IThread {
     const(char)[] getHtml();
     ILink[] getLinks();
@@ -21,5 +23,11 @@ class UpdateResult {
 
     this(string[] newLinks) {
         this.newLinks = newLinks;
+    }
+}
+
+class PostNotFoundException : Exception {
+    this(int postId) {
+        super("Post not found: %d".format(postId));
     }
 }
