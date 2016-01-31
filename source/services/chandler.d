@@ -84,16 +84,12 @@ class ChandlerThread {
         import std.file;
         import std.path;
 
-        auto thread = this._parser.parseThread(html);
-        auto links = thread.getLinks();
-
-        // Process links
-        this.processLinks(links);
-
         auto outputHTMLPath = buildPath(this._path, "thread.html");
-
         const(char)[] outputHTML;
+
         if (outputHTMLPath.exists()) {
+            /* If the output file already exists, update the existing
+               file with new posts from the HTML. */
             writeln("Updating existing...");
             auto baseHTML = readText(outputHTMLPath);
             auto baseThread = this._parser.parseThread(baseHTML);
@@ -106,9 +102,19 @@ class ChandlerThread {
             outputHTML = baseThread.getHtml();
         }
         else {
+            /* If the output file was not found, parse and process it
+               in its entirety. */
+            writeln("Creating new...");
+            auto thread = this._parser.parseThread(html);
+            auto links = thread.getLinks();
+
+            // Process links
+            this.processLinks(links);
+
             outputHTML = thread.getHtml();
         }
 
+        // Write resulting HTML to output file
         std.file.write(outputHTMLPath, outputHTML);
     }
 

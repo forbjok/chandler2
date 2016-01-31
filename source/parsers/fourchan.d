@@ -51,12 +51,10 @@ class FourChanThread : IThread {
 
         ILink[] newLinks;
 
-        writeln("GOP");
         auto oldPosts = this.getAllPosts()
             .map!(p => p.getPostId())
             .array();
 
-        writeln("GNP");
         auto newThread = new FourChanThread(newHtml);
         auto newPosts = newThread.getAllPosts()
             .map!(p => p.getPostId())
@@ -70,31 +68,24 @@ class FourChanThread : IThread {
             return new UpdateResult(newLinks);
         }
 
-        writeln("FCA");
         // Find common ancestor post
         Node* oldCommonAncestor;
         auto newCommonAncestor = newThread.getPost(addedPosts[0]);
         while (oldCommonAncestor is null && newCommonAncestor !is null) {
             oldCommonAncestor = this.getPost(newCommonAncestor.getPostId());
             newCommonAncestor = newCommonAncestor.previousSibling;
-            writeln("NCA ", newCommonAncestor);
         }
 
         if (oldCommonAncestor is null) {
             throw new Exception("Common ancestor not found.");
         }
 
-        writeln("FoundCA");
         foreach(postId; addedPosts) {
             auto addedPost = newThread.getPost(postId);
-            writeln("a");
             auto dummyElement = this._document.createElement("div");
-            writeln("b");
             dummyElement.html = addedPost.outerHTML;
             auto newOldPost = dummyElement.firstChild();
-            writeln("c");
 
-            writeln("APC ", postId);
             this._threadNode.appendChild(newOldPost);
 
             newLinks ~= findLinks(&this._document, newOldPost);
