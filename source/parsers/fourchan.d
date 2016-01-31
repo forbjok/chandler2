@@ -21,6 +21,25 @@ private int getPostId(in Node* node) {
     return m[1].to!int;
 }
 
+private Node* getLastCommonPost(FourChanThread oldThread, FourChanThread newThread, int firstNewPostId) {
+    /* In order to add new posts from the updated HTML, we need to find
+       the last common post between the two HTMLs. We do this by starting
+       at the first new post and going backwards until we find a post that
+       exists in the current thread. */
+    Node* lastCommonPost;
+    auto newPost = newThread.getPost(firstNewPostId);
+    while (lastCommonPost is null && newPost !is null) {
+        lastCommonPost = oldThread.getPost(newPost.getPostId());
+        newPost = newPost.previousSibling;
+    }
+
+    if (lastCommonPost is null) {
+        throw new NoCommonPostException();
+    }
+
+    return lastCommonPost;
+}
+
 class FourChanThread : IThread {
     private {
         Document _document;
@@ -51,48 +70,45 @@ class FourChanThread : IThread {
 
         ILink[] newLinks;
 
-        auto oldPosts = this.getAllPosts()
+        // Get all post IDs in this thread
+        auto posts = this.getAllPosts()
             .map!(p => p.getPostId())
             .array();
 
-        auto newThread = new FourChanThread(newHtml);
-        auto newPosts = newThread.getAllPosts()
+        // Parse the updated thread HTML
+        auto updateThread = new FourChanThread(newHtml);
+
+        // Get all post IDs in the updated thread
+        auto updatePosts = updateThread.getAllPosts()
             .map!(p => p.getPostId())
             .array();
 
-        auto addedPosts = setDifference(newPosts, oldPosts).array();
+        // Get a list of all new post IDs
+        auto newPostsIds = setDifference(updatePosts, posts).array();
 
-        writeln("Added posts (", oldPosts.length , " => ", newPosts.length , "): ", addedPosts);
+        writeln("Added posts (", posts.length , " => ", updatePosts.length , "): ", newPostsIds);
 
-        if (addedPosts.length == 0) {
-            return new UpdateResult(newLinks);
+        if (newPostsIds.length > 0) {
+            foreach(newPostId; newPostsIds) {
+                auto updatePost = updateThread.getPost(newPostId);
+
+                /* Because there doesn't seem to be a way to create a new element
+                   from existing HTML in htmld, create an empty dummy element and set its
+                   inner HTML to the HTML of the updated post and get the newly
+                   created post element by retrieving its first child element. */
+                auto dummyElement = this._document.createElement("div");
+                dummyElement.html = updatePost.outerHTML;
+                auto newPost = dummyElement.firstChild();
+
+                // Append the new post to the thread node
+                this._threadNode.appendChild(newPost);
+
+                // Find links in the newly appended post and add them to the list
+                newLinks ~= findLinks(&this._document, newPost);
+            }
         }
 
-        // Find common ancestor post
-        Node* oldCommonAncestor;
-        auto newCommonAncestor = newThread.getPost(addedPosts[0]);
-        while (oldCommonAncestor is null && newCommonAncestor !is null) {
-            oldCommonAncestor = this.getPost(newCommonAncestor.getPostId());
-            newCommonAncestor = newCommonAncestor.previousSibling;
-        }
-
-        if (oldCommonAncestor is null) {
-            throw new Exception("Common ancestor not found.");
-        }
-
-        foreach(postId; addedPosts) {
-            auto addedPost = newThread.getPost(postId);
-            auto dummyElement = this._document.createElement("div");
-            dummyElement.html = addedPost.outerHTML;
-            auto newOldPost = dummyElement.firstChild();
-
-            this._threadNode.appendChild(newOldPost);
-
-            newLinks ~= findLinks(&this._document, newOldPost);
-        }
-
-        auto result = new UpdateResult(newLinks);
-        return result;
+        return UpdateResult(newPostsIds, newLinks);
     }
 
     private Node*[] getAllPosts() {

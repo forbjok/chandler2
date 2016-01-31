@@ -18,16 +18,19 @@ interface IThreadParser {
     IThread parseThread(in char[] html);
 }
 
-class UpdateResult {
+struct UpdateResult {
+    int[] newPosts;
     ILink[] newLinks;
-
-    this(ILink[] newLinks) {
-        this.newLinks = newLinks;
-    }
 }
 
 class PostNotFoundException : Exception {
     this(int postId) {
         super("Post not found: %d".format(postId));
+    }
+}
+
+class NoCommonPostException : Exception {
+    this() {
+        super("No common post found");
     }
 }
