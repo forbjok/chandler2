@@ -15,7 +15,7 @@ interface ILink {
 }
 
 interface IThreadParser {
-    IThread parseThread(in string url, in char[] html);
+    IThread parseThread(in char[] html);
 }
 
 class UpdateResult {

@@ -77,17 +77,39 @@ class ChandlerThread {
         if (this.threadDownloaded !is null)
             this.threadDownloaded(html, now);
 
-        this.process(html);
+        this.processHTML(html);
     }
 
-    protected void process(in char[] html) {
+    protected void processHTML(in char[] html) {
+        import std.file;
         import std.path;
 
-        auto thread = this._parser.parseThread(this._url, html);
+        auto thread = this._parser.parseThread(html);
         auto links = thread.getLinks();
-        auto pBaseURL = this._url.parseURL();
 
-        //foreach(p; thread.get)
+        // Process links
+        this.processLinks(links);
+
+        auto outputHTMLPath = buildPath(this._path, "thread.html");
+
+        const(char)[] outputHTML;
+        if (outputHTMLPath.exists()) {
+            writeln("Updating existing...");
+            auto baseHTML = readText(outputHTMLPath);
+            auto baseThread = this._parser.parseThread(baseHTML);
+
+            baseThread.update(html);
+            outputHTML = baseThread.getHtml();
+        }
+        else {
+            outputHTML = thread.getHtml();
+        }
+
+        std.file.write(outputHTMLPath, outputHTML);
+    }
+
+    private void processLinks(ILink[] links) {
+        auto pBaseURL = this._url.parseURL();
 
         foreach(link; links) {
             auto absoluteUrl = (pBaseURL ~ link.url).toString();
@@ -108,7 +130,5 @@ class ChandlerThread {
 
             link.url = path.to!string;
         }
-
-        std.file.write(buildPath(this._path, "thread.html"), thread.getHtml());
     }
 }

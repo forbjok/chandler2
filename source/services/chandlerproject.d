@@ -38,6 +38,7 @@ class ChandlerProject : ChandlerThread {
         };
     }
 
+    /* Create a new project in path, for the given url */
     static ChandlerProject create(in char[] path, in char[] url) {
         auto projectDir = buildPath(path, ProjectDirName);
 
@@ -56,6 +57,7 @@ class ChandlerProject : ChandlerThread {
         return project;
     }
 
+    /* Load project from a path */
     static ChandlerProject load(in char[] path) {
         auto projectDir = buildPath(path, ProjectDirName);
 
@@ -80,6 +82,7 @@ class ChandlerProject : ChandlerThread {
         return project;
     }
 
+    /* Save project configuration */
     void save() {
         ThreadConfig threadConfig;
         with (threadConfig) {
@@ -106,6 +109,11 @@ class ChandlerProject : ChandlerThread {
         import std.file;
         import std.string;
 
+        auto threadHTMLPath = buildPath(this.path, "thread.html");
+        if (threadHTMLPath.exists()) {
+            std.file.remove(threadHTMLPath);
+        }
+
         /* Fetch a list of all original htmls sorted by name
            (which is a unix timestamp, and should be in download order) */
         auto originalFilenames = this._originalsPath.dirEntries(SpanMode.shallow)
@@ -120,7 +128,7 @@ class ChandlerProject : ChandlerThread {
             writeln("Rebuilding ", filename);
 
             auto html = readText(filename);
-            this.process(html);
+            this.processHTML(html);
         }
     }
 }
