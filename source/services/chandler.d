@@ -17,6 +17,12 @@ string defaultMapURL(in char[] url) {
     return path.to!string;
 }
 
+const(char)[] curlGetURL(in char[] url) {
+    import std.net.curl;
+
+    return get(url);
+}
+
 void curlDownload(in string url, in string destinationPath) {
     import std.file;
     import std.net.curl;
@@ -54,6 +60,7 @@ class ChandlerThread {
     }
 
     // Customizable functions
+    const(char)[] delegate(in char[] url) getURL;
     string delegate(in char[] url) mapURL;
     void delegate(in string url, in string destinationPath) downloadLink;
 
@@ -71,6 +78,7 @@ class ChandlerThread {
 
         this._parser = new FourChanThreadParser();
 
+        this.getURL = toDelegate(&curlGetURL);
         this.mapURL = toDelegate(&defaultMapURL);
         this.downloadLink = toDelegate(&curlDownload);
     }
@@ -89,7 +97,7 @@ class ChandlerThread {
     void download() {
         import std.datetime : Clock, UTC;
 
-        auto html = get(this._url);
+        auto html = this.getURL(this._url);
 
         auto now = Clock.currTime(UTC());
 

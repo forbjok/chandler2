@@ -117,3 +117,31 @@ class FourChanThreadParser : IThreadParser {
         return new FourChanThread(html);
     }
 }
+
+unittest {
+    import dunit.toolkit;
+
+    // A single post
+    enum testHTML1 = `<div class="thread"><div id="pc100001" class="postContainer"></div></div>`;
+
+    // Two posts
+    enum testHTML2 = `<div class="thread"><div id="pc100001" class="postContainer"></div><div id="pc100002" class="postContainer"></div></div>`;
+
+    // The second post has been deleted, and a third new one added
+    enum testHTML3 = `<div class="thread"><div id="pc100001" class="postContainer"></div><div id="pc100003" class="postContainer"></div></div>`;
+    enum testHTML3Merged = `<div class="thread"><div id="pc100001" class="postContainer"></div><div id="pc100002" class="postContainer"></div><div id="pc100003" class="postContainer"></div></div>`;
+
+    // Parse HTML1
+    auto thread = new FourChanThread(testHTML1);
+
+    // Assert that getHtml() returns same HTML
+    thread.getHtml().assertEqual(testHTML1);
+
+    // Update thread with HTML2 and assert that it matches HTML2
+    thread.update(testHTML2);
+    thread.getHtml().assertEqual(testHTML2);
+
+    // Update thread with HTML3 and assert that the resulting HTML contains all posts
+    thread.update(testHTML3);
+    thread.getHtml().assertEqual(testHTML3Merged);
+}

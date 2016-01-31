@@ -7,6 +7,7 @@
     "reurl": "*",
     "jsonserialized": "*",
     "htmld": "~>0.2.9",
-    "std_data_json": "~>0.17.0"
+    "std_data_json": "~>0.17.0",
+    "dunit": "~>1.0.12"
   }
 }
