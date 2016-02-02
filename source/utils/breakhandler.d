@@ -20,4 +20,21 @@ void handleBreak() {
 
         SetConsoleCtrlHandler(cast(PHANDLER_ROUTINE)&handler, TRUE);
     }
+    else version (Posix) {
+        import core.stdc.signal;
+        import core.sys.posix.signal;
+
+        static nothrow void handler(int s) {
+            writeln("Ctrl-C pressed.");
+            isTerminating = true;
+        }
+
+        sigaction_t sa;
+
+        sa.sa_handler = &handler;
+        sigemptyset(&sa.sa_mask);
+        sa.sa_flags = 0;
+
+        sigaction(SIGINT, &sa, NULL);
+    }
 }
