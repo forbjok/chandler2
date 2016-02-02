@@ -22,10 +22,16 @@ void handleBreak() {
     }
     else version (Posix) {
         import core.stdc.signal;
+        import core.stdc.stdio;
         import core.sys.posix.signal;
 
-        static nothrow void handler(int s) {
-            writeln("Ctrl-C pressed.");
+        extern (C) static nothrow void handler(int s) {
+            try {
+                writeln("Ctrl-C pressed.");
+            }
+            catch {
+            }
+
             isTerminating = true;
         }
 
@@ -35,6 +41,6 @@ void handleBreak() {
         sigemptyset(&sa.sa_mask);
         sa.sa_flags = 0;
 
-        sigaction(SIGINT, &sa, NULL);
+        sigaction(SIGINT, &sa, null);
     }
 }
