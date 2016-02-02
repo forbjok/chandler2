@@ -11,6 +11,9 @@ import std.net.curl;
 import breakhandler;
 import chandlerproject;
 
+import dstatus.progress;
+import dstatus.termutils;
+
 void main(string[] args)
 {
     auto baseURL = "";
@@ -37,18 +40,20 @@ void main(string[] args)
         // If an exception is thrown during download, delete the broken file
         scope(failure) std.file.remove(destinationPath);
 
-        auto file = File(destinationPath, "w");
-        scope(exit) file.close();
+        auto operation = operationProgressIndicator(getTerminalWidth(), 1);
+        scope(exit) operation.clear();
+        
+        operation.step(url);
 
-        size_t downloadedBytes;
-        writefln("Downloading %s... ", url);
+        auto http = HTTP();
+        http.onProgress = (dlTotal, dlNow, ulTotal, ulNow) {
+            auto percent = dlTotal == 0 ? 0 : ((dlNow.to!float / dlTotal) * 100).to!int;
+            operation.progress(percent);
+            return 0;
+        };
+
         // Download file
-        foreach(chunk; std.net.curl.byChunk(url)) {
-            downloadedBytes += chunk.length;
-            string progr = "%d%%".format(downloadedBytes);
-            stdout.writef("%s%s", '\b'.repeat(progr.length), progr);
-            file.rawWrite(chunk);
-        }
+        download(url, destinationPath, http);
     };
 
     // Print info when a thread update occurred
