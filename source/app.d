@@ -9,10 +9,40 @@ import std.stdio;
 import std.net.curl;
 
 import breakhandler;
+import chandler;
 import chandlerproject;
 
-import dstatus.progress;
-import dstatus.termutils;
+import downloadprogress;
+
+class DownloadProgressTracker : IDownloadProgressTracker {
+    private {
+        DownloadProgressIndicator _downloadProgress;
+    }
+
+    void started(in DownloadFile[] files) {
+        _downloadProgress = new DownloadProgressIndicator(files.length);
+    }
+
+    void fileStarted(in DownloadFile file) {
+        _downloadProgress.step(file.url);
+        _downloadProgress.progress(0);
+    }
+
+    void fileProgress(in short percent) {
+        _downloadProgress.progress(percent);
+    }
+
+    void fileCompleted(in DownloadFile file) {
+        // Print informational message when a file completes downloading
+        _downloadProgress.clear();
+        writefln("%s downloaded.", file.url);
+    }
+
+    void completed() {
+        _downloadProgress.clear();
+    }
+}
+
 
 void main(string[] args)
 {
@@ -22,48 +52,17 @@ void main(string[] args)
     //std.file.write("orig.html", html);
     //auto html = readText("orig.html");
 
-    handleBreak();
+    //handleBreak();
 
     auto chandl = ChandlerProject.create(basePath, baseURL);
     chandl.save();
     //auto chandl = ChandlerProject.load(basePath);
 
-    chandl.downloadLink = (url, destinationPath) {
-        import std.file;
-        import std.net.curl;
-        import std.path;
-
-        // Ensure that destination directory exists
-        auto destinationDir = destinationPath.dirName();
-        mkdirRecurse(destinationDir);
-
-        // If an exception is thrown during download, delete the broken file
-        scope(failure) std.file.remove(destinationPath);
-
-        auto operation = operationProgressIndicator(getTerminalWidth(), 1);
-        scope(exit) operation.clear();
-        
-        operation.step(url);
-
-        auto http = HTTP();
-        http.onProgress = (dlTotal, dlNow, ulTotal, ulNow) {
-            auto percent = dlTotal == 0 ? 0 : ((dlNow.to!float / dlTotal) * 100).to!int;
-            operation.progress(percent);
-            return 0;
-        };
-
-        // Download file
-        download(url, destinationPath, http);
-    };
+    chandl.downloadProgressTracker = new DownloadProgressTracker();
 
     // Print info when a thread update occurred
     chandl.threadUpdated = (updateResult) {
         writefln("%d new posts found.", updateResult.newPosts.length);
-    };
-
-    // Print error message if a link download fails
-    chandl.linkDownloaded = (url, destinationFile) {
-        writefln("%s downloaded.", url);
     };
 
     // Print error message if a link download fails

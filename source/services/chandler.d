@@ -1,3 +1,4 @@
+import std.algorithm.searching;
 import std.conv;
 import std.datetime : SysTime;
 import std.net.curl;
@@ -6,6 +7,20 @@ import fourchan;
 import linkfilter;
 import threadparser;
 import reurl;
+import download;
+
+struct DownloadFile {
+    string url;
+    string destinationPath;
+}
+
+interface IDownloadProgressTracker {
+    void started(in DownloadFile[] files);
+    void fileStarted(in DownloadFile file);
+    void fileProgress(in short percent);
+    void fileCompleted(in DownloadFile file);
+    void completed();
+}
 
 string defaultMapURL(in char[] url) {
     import std.path;
@@ -21,22 +36,6 @@ const(char)[] curlGetURL(in char[] url) {
     import std.net.curl;
 
     return get(url);
-}
-
-void curlDownload(in string url, in string destinationPath) {
-    import std.file;
-    import std.net.curl;
-    import std.path;
-
-    // Ensure that destination directory exists
-    auto destinationDir = destinationPath.dirName();
-    mkdirRecurse(destinationDir);
-
-    // If an exception is thrown during download, delete the broken file
-    scope(failure) std.file.remove(destinationPath);
-
-    // Download file
-    download(url, destinationPath);
 }
 
 class ChandlerThread {
@@ -59,15 +58,15 @@ class ChandlerThread {
         return this._downloadExtensions;
     }
 
+    IDownloadProgressTracker downloadProgressTracker;
+
     // Customizable functions
     const(char)[] delegate(in char[] url) getURL;
     string delegate(in char[] url) mapURL;
-    void delegate(in string url, in string destinationPath) downloadLink;
 
     // Events
     void delegate(in char[] html, in SysTime time) threadDownloaded;
     void delegate(in UpdateResult updateResult) threadUpdated;
-    void delegate(in char[] url, in char[] destinationFile) linkDownloaded;
     void delegate(in char[] url, in char[] message) linkDownloadFailed;
 
     this(in char[] url, in char[] path) {
@@ -80,7 +79,6 @@ class ChandlerThread {
 
         this.getURL = toDelegate(&curlGetURL);
         this.mapURL = toDelegate(&defaultMapURL);
-        this.downloadLink = toDelegate(&curlDownload);
     }
 
     void includeExtension(in string extension) {
@@ -151,6 +149,8 @@ class ChandlerThread {
 
         auto pBaseURL = this._url.parseURL();
 
+        string[] knownUrls;
+        DownloadFile[] downloadLinks;
         foreach(link; links) {
             auto absoluteUrl = (pBaseURL ~ link.url).toString();
 
@@ -163,22 +163,37 @@ class ChandlerThread {
             // Update link to local relative path
             link.url = path.to!string;
 
-            // If destination file already exists, skip it
+            if (knownUrls.canFind(absoluteUrl))
+                continue;
+
+            knownUrls ~= absoluteUrl;
+
+            // If destination file already exists, there is no need to download it
             if (destinationPath.exists())
                 continue;
 
+            // Add to list of links to download
+            downloadLinks ~= DownloadFile(absoluteUrl, destinationPath);
+        }
+
+        downloadProgressTracker.started(downloadLinks);
+        scope(exit) downloadProgressTracker.completed();
+
+        foreach(dl; downloadLinks) {
+            // Update progress step
+            downloadProgressTracker.fileStarted(dl);
+
             try {
                 // Download file
-                this.downloadLink(absoluteUrl, destinationPath);
+                downloadFile(dl.url, dl.destinationPath, (p) => downloadProgressTracker.fileProgress(p));
 
-                if (this.linkDownloaded !is null)
-                    this.linkDownloaded(absoluteUrl, destinationPath);
+                downloadProgressTracker.fileCompleted(dl);
             }
             catch(Exception ex) {
                 import std.format;
 
                 if (this.linkDownloadFailed !is null)
-                    this.linkDownloadFailed(absoluteUrl, ex.msg);
+                    this.linkDownloadFailed(dl.url, ex.msg);
 
                 continue;
             }
