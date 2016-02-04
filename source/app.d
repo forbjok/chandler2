@@ -1,17 +1,16 @@
-import std.algorithm;
-import std.array;
-import std.conv;
-import std.file;
-import std.format;
-import std.path;
+import std.conv : text;
+import std.file : exists, getcwd;
+import std.getopt : getopt;
+import std.path : absolutePath, baseName, buildPath;
 import std.range;
+import std.regex : matchFirst, regex;
 import std.stdio;
-import std.net.curl;
+
+import dstatus.status;
 
 import breakhandler;
 import chandler;
 import chandlerproject;
-
 import downloadprogress;
 
 class DownloadProgressTracker : IDownloadProgressTracker {
@@ -43,33 +42,106 @@ class DownloadProgressTracker : IDownloadProgressTracker {
     }
 }
 
+enum getThreadId = regex(`(\w+)://([\w\.]+)/(\w+)/thread/(\d+)`);
 
-void main(string[] args)
+int main(string[] args)
 {
-    auto baseURL = "";
-    auto basePath = "temptest".absolutePath();
-    //auto html = get(baseURL);
-    //std.file.write("orig.html", html);
-    //auto html = readText("orig.html");
+    bool continuous = false;
+    int interval = 30;
 
-    //handleBreak();
+    try {
+        // Parse arguments
+        auto getoptResult = getopt(args,
+            std.getopt.config.bundling,
+            "c|continuous", &continuous,
+            "i|interval", &interval);
 
-    auto chandl = ChandlerProject.create(basePath, baseURL);
-    chandl.save();
-    //auto chandl = ChandlerProject.load(basePath);
+        if (getoptResult.helpWanted) {
+            // If user wants help, give it to them
+            writeUsage(args[0]);
+            return 1;
+        }
+    }
+    catch(Exception ex) {
+        // If there is an error parsing arguments, print it
+        writeln(ex.msg);
+        return 1;
+    }
 
-    chandl.downloadProgressTracker = new DownloadProgressTracker();
+    auto basePath = getcwd().absolutePath();
 
-    // Print info when a thread update occurred
-    chandl.threadUpdated = (updateResult) {
-        writefln("%d new posts found.", updateResult.newPosts.length);
-    };
+    void downloadThread(in string url) {
+        auto m = url.matchFirst(getThreadId);
+        if (m.empty) {
+            writeln("Error getting thread ID for: ", url);
+            return;
+        }
 
-    // Print error message if a link download fails
-    chandl.linkDownloadFailed = (url, message) {
-        writefln("Failed to download file: [%s]: %s.", url, message);
-    };
+        auto savePath = buildPath(basePath, "threads", text(m[4]));
 
-    chandl.download();
-    //chandl.rebuild();
+        writeln("Downloading thread ", url, " to ", savePath);
+
+        ChandlerProject chandl;
+        if (savePath.exists()) {
+            chandl = ChandlerProject.load(savePath);
+        }
+        else {
+            chandl = ChandlerProject.create(savePath, url);
+            chandl.save();
+        }
+
+        chandl.downloadProgressTracker = new DownloadProgressTracker();
+
+        // Print info when a thread update occurred
+        chandl.threadUpdated = (updateResult) {
+            writefln("%d new posts found.", updateResult.newPosts.length);
+        };
+
+        // Print error message if a link download fails
+        chandl.linkDownloadFailed = (url, message) {
+            writefln("Failed to download file: [%s]: %s.", url, message);
+        };
+
+        chandl.download();
+        //chandl.rebuild();
+    }
+
+    void downloadThreadContinuous(in string url) {
+        import core.thread;
+
+        while(true) {
+            // Download thread
+            downloadThread(url);
+
+            // Do countdown
+            auto status = status();
+            scope(exit) status.clear();
+
+            status.write("Updating in ");
+
+            for(int i = interval; i > 0; --i) {
+                status.report(i, "...");
+                Thread.getThis().sleep(dur!("seconds")(1));
+            }
+        }
+    }
+
+    if (continuous) {
+        auto url = args[1];
+
+        // Download thread continuously
+        downloadThreadContinuous(url);
+    }
+    else {
+        foreach(url; args[1..$]) {
+            // Download thread once
+            downloadThread(url);
+        }
+    }
+
+    return 0;
+}
+
+void writeUsage(in string executable) {
+    writefln("Usage: %s [-c] [-i INTERVAL] [--help] <url(s)>", executable.baseName());
 }
