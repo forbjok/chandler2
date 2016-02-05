@@ -47,14 +47,14 @@ enum getThreadId = regex(`(\w+)://([\w\.]+)/(\w+)/thread/(\d+)`);
 
 int main(string[] args)
 {
-    bool continuous = false;
+    string[] watchThreads;
     int interval = 30;
 
     try {
         // Parse arguments
         auto getoptResult = getopt(args,
             std.getopt.config.bundling,
-            "c|continuous", &continuous,
+            "w|watch", &watchThreads,
             "i|interval", &interval);
 
         if (getoptResult.helpWanted) {
@@ -107,12 +107,19 @@ int main(string[] args)
         //chandl.rebuild();
     }
 
-    void downloadThreadContinuous(in string url) {
+    foreach(url; args[1..$]) {
+        // Download thread once
+        downloadThread(url);
+    }
+
+    if (watchThreads.length > 0) {
         import core.thread;
 
         while(true) {
-            // Download thread
-            downloadThread(url);
+            foreach(url; watchThreads) {
+                // Download thread
+                downloadThread(url);
+            }
 
             // Do countdown
             auto status = status();
@@ -124,19 +131,6 @@ int main(string[] args)
                 status.report(i, "...");
                 Thread.getThis().sleep(dur!("seconds")(1));
             }
-        }
-    }
-
-    if (continuous) {
-        auto url = args[1];
-
-        // Download thread continuously
-        downloadThreadContinuous(url);
-    }
-    else {
-        foreach(url; args[1..$]) {
-            // Download thread once
-            downloadThread(url);
         }
     }
 
