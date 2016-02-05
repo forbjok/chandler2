@@ -12,18 +12,20 @@ class DownloadProgressIndicator : Status {
         int _stepCount;
         int _currentStep;
         string _stepDescription;
+
+        string _prevReport;
     }
 
     this(in int stepCount) {
         auto width = getTerminalWidth();
         _stepCount = stepCount;
 
-        _stepWidth = makeStepCounter(_stepCount, _stepCount).length + 1;
-        _descriptionWidth = (width / 2) - _stepWidth;
-
-        auto progressWidth = (width / 2) - 2;
+        auto progressWidth = (width / 3) - 2;
         _percentTextWidth = 4;
         _progressBarWidth = progressWidth - _percentTextWidth - 1;
+
+        _stepWidth = makeStepCounter(_stepCount, _stepCount).length + 1;
+        _descriptionWidth = ((width / 3) * 2) - _stepWidth;
     }
 
     final void step(in string description) {
@@ -43,6 +45,10 @@ class DownloadProgressIndicator : Status {
             " ",
             makeFixedWidth(_descriptionWidth, _stepDescription));
 
-        report(indicator);
+        // Avoid re-reporting identical text to avoid unnecessary cursor flickering
+        if (indicator != _prevReport) {
+            report(indicator);
+            _prevReport = indicator;
+        }
     }
 }

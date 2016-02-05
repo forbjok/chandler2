@@ -27,7 +27,8 @@ class DownloadProgressTracker : IDownloadProgressTracker {
         _downloadProgress.progress(0);
     }
 
-    void fileProgress(in short percent) {
+    void fileProgress(in size_t current, in size_t total) {
+        auto percent = (total == 0 ? 0 : ((current.to!float / total) * 100)).to!short;
         _downloadProgress.progress(percent);
     }
 

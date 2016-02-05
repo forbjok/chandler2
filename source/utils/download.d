@@ -3,7 +3,7 @@ import std.file;
 import std.net.curl;
 import std.path;
 
-void downloadFile(in string url, in string destinationPath, void delegate(in short percent) onProgress) {
+void downloadFile(in string url, in string destinationPath, void delegate(in size_t current, in size_t total) onProgress) {
     // Ensure that destination directory exists
     auto destinationDir = destinationPath.dirName();
     mkdirRecurse(destinationDir);
@@ -13,8 +13,7 @@ void downloadFile(in string url, in string destinationPath, void delegate(in sho
 
     auto http = HTTP();
     http.onProgress = (dlTotal, dlNow, ulTotal, ulNow) {
-        auto percent = (dlTotal == 0 ? 0 : ((dlNow.to!float / dlTotal) * 100)).to!short;
-        onProgress(percent);
+        onProgress(dlNow, dlTotal);
         return 0;
     };
 

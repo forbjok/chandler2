@@ -17,7 +17,7 @@ struct DownloadFile {
 interface IDownloadProgressTracker {
     void started(in DownloadFile[] files);
     void fileStarted(in DownloadFile file);
-    void fileProgress(in short percent);
+    void fileProgress(in size_t current, in size_t total);
     void fileCompleted(in DownloadFile file);
     void completed();
 }
@@ -185,7 +185,7 @@ class ChandlerThread {
 
             try {
                 // Download file
-                downloadFile(dl.url, dl.destinationPath, (p) => downloadProgressTracker.fileProgress(p));
+                downloadFile(dl.url, dl.destinationPath, (c, t) => downloadProgressTracker.fileProgress(c, t));
 
                 downloadProgressTracker.fileCompleted(dl);
             }
