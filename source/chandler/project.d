@@ -37,13 +37,21 @@ class ChandlerProject : ThreadDownloader {
         this._projectDir = projectDir.to!string;
         this._originalsPath = buildPath(this._projectDir, OriginalsDirName);
         this._threadConfigPath = buildPath(this._projectDir, ThreadConfigName);
+    }
 
-        this.threadDownloaded = (html, time) {
-            auto unixTime = time.toUnixTime();
+    override const(char)[] downloadThread(void delegate(in size_t current, in size_t total) onProgress) {
+        import std.datetime;
+        import chandl.utils.download : downloadFile;
 
-            mkdirRecurse(this._originalsPath);
-            std.file.write(buildPath(this._originalsPath, "%d.html".format(unixTime)), html);
-        };
+        auto unixTime = Clock.currTime(UTC()).toUnixTime();
+        auto filename = buildPath(_originalsPath, "%d.html".format(unixTime));
+
+        mkdirRecurse(_originalsPath);
+
+        downloadFile(text(url), filename, onProgress);
+        auto html = readText(filename);
+
+        return html;
     }
 
     /* Create a new project in path, for the given url */

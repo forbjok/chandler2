@@ -2,7 +2,7 @@ module chandl.utils.download;
 
 import std.conv : to;
 import std.file;
-import std.net.curl;
+import std.net.curl : download, get, HTTP;
 import std.path;
 
 void downloadFile(in string url, in string destinationPath, void delegate(in size_t current, in size_t total) onProgress) {
@@ -21,4 +21,15 @@ void downloadFile(in string url, in string destinationPath, void delegate(in siz
 
     // Download file
     download(url, destinationPath, http);
+}
+
+char[] getFile(in string url, void delegate(in size_t current, in size_t total) onProgress) {
+    auto http = HTTP();
+    http.onProgress = (dlTotal, dlNow, ulTotal, ulNow) {
+        onProgress(dlNow, dlTotal);
+        return 0;
+    };
+
+    // Get file
+    return get(url, http);
 }

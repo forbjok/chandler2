@@ -1,9 +1,9 @@
 module chandl.downloader;
 
 import std.algorithm.searching;
-import std.conv : to;
+import std.conv : text, to;
 import std.datetime : SysTime;
-import std.net.curl;
+import std.path : buildPath;
 
 import reurl;
 
@@ -34,19 +34,13 @@ interface IDownloadProgressTracker {
 }
 
 string defaultMapURL(in char[] url) {
-    import std.path;
+    import std.path : dirSeparator;
     import std.string;
 
     auto purl = text(url).parseURL();
     auto path = purl.hostname ~ purl.path.replace("/", dirSeparator);
 
     return path.to!string;
-}
-
-const(char)[] curlGetURL(in char[] url) {
-    import std.net.curl;
-
-    return get(url);
 }
 
 class ThreadDownloader {
@@ -72,11 +66,9 @@ class ThreadDownloader {
     IDownloadProgressTracker downloadProgressTracker;
 
     // Customizable functions
-    const(char)[] delegate(in char[] url) getURL;
     string delegate(in char[] url) mapURL;
 
     // Events
-    void delegate(in char[] html, in SysTime time) threadDownloaded;
     void delegate(in UpdateResult updateResult) threadUpdated;
     void delegate(in char[] url, in char[] message) linkDownloadFailed;
 
@@ -88,7 +80,6 @@ class ThreadDownloader {
 
         this._parser = parser;
 
-        this.getURL = toDelegate(&curlGetURL);
         this.mapURL = toDelegate(&defaultMapURL);
     }
 
@@ -104,16 +95,18 @@ class ThreadDownloader {
     }
 
     void download() {
-        import std.datetime : Clock, UTC;
-
-        auto html = this.getURL(this._url);
-
-        auto now = Clock.currTime(UTC());
-
-        if (this.threadDownloaded !is null)
-            this.threadDownloaded(html, now);
+        downloadProgressTracker.started([DownloadFile(url, "")]);
+        auto html = downloadThread((c, t) => downloadProgressTracker.fileProgress(c, t));
+        downloadProgressTracker.completed();
 
         this.processHTML(html);
+    }
+
+    protected const(char)[] downloadThread(void delegate(in size_t current, in size_t total) onProgress) {
+        import std.net.curl : get;
+
+        // TODO: Fix already UTF-8 encoded pages getting incorrectly UTF8-decoded, potentially resulting in corrupted characters
+        return getFile(url, onProgress);
     }
 
     protected void processHTML(in char[] html) {
