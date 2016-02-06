@@ -1,4 +1,4 @@
-import std.conv;
+import std.conv : text, to;
 import std.file;
 import std.format;
 import std.path;
@@ -38,9 +38,12 @@ class ChandlerProject : ChandlerThread {
 
     /* Create a new project in path, for the given url */
     static ChandlerProject create(in char[] path, in char[] url) {
-        auto projectDir = buildPath(path, ProjectDirName);
+        // Get absolute path
+        auto absolutePath = text(path).absolutePath();
 
-        auto project = new ChandlerProject(url, path, projectDir);
+        auto projectDir = buildPath(absolutePath, ProjectDirName);
+
+        auto project = new ChandlerProject(url, absolutePath, projectDir);
 
         // Add default extensions
         with (project) {
@@ -60,11 +63,14 @@ class ChandlerProject : ChandlerThread {
         import jsonserialized;
         import stdx.data.json;
 
+        // Get absolute path
+        auto absolutePath = text(path).absolutePath();
+
         // Construct project directory path
-        auto projectDir = buildPath(path, ProjectDirName);
+        auto projectDir = buildPath(absolutePath, ProjectDirName);
 
         if (!projectDir.exists())
-            throw new Exception("Chandler project not found in: " ~ path.to!string);
+            throw new Exception("Chandler project not found in: " ~ absolutePath.to!string);
 
         auto threadJsonPath = buildPath(projectDir, ThreadConfigName);
 
@@ -75,7 +81,7 @@ class ChandlerProject : ChandlerThread {
         ThreadConfig threadConfig;
         threadConfig.deserializeFromJSONValue(jsonConfig);
 
-        auto project = new ChandlerProject(threadConfig.url, path, projectDir);
+        auto project = new ChandlerProject(threadConfig.url, absolutePath, projectDir);
 
         foreach(ext; threadConfig.downloadExtensions) {
             project.includeExtension(ext);

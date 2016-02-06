@@ -43,7 +43,8 @@ class DownloadProgressTracker : IDownloadProgressTracker {
     }
 }
 
-enum getThreadId = regex(`(\w+)://([\w\.]+)/(\w+)/thread/(\d+)`);
+string basePath;
+DownloadProgressTracker downloadProgressTracker;
 
 int main(string[] args)
 {
@@ -69,56 +70,38 @@ int main(string[] args)
         return 1;
     }
 
-    auto basePath = getcwd().absolutePath();
+    basePath = getcwd().absolutePath();
+    downloadProgressTracker = new DownloadProgressTracker();
 
-    void downloadThread(in string url) {
-        auto m = url.matchFirst(getThreadId);
-        if (m.empty) {
-            writeln("Error getting thread ID for: ", url);
-            return;
-        }
+    foreach(source; args[1..$]) {
+        auto project = getProjectFromSource(source);
 
-        auto savePath = buildPath(basePath, "threads", text(m[4]));
+        writeln("Downloading thread ", project.url, " to ", project.path);
 
-        writeln("Downloading thread ", url, " to ", savePath);
-
-        ChandlerProject chandl;
-        if (savePath.exists()) {
-            chandl = ChandlerProject.load(savePath);
-        }
-        else {
-            chandl = ChandlerProject.create(savePath, url);
-            chandl.save();
-        }
-
-        chandl.downloadProgressTracker = new DownloadProgressTracker();
-
-        // Print info when a thread update occurred
-        chandl.threadUpdated = (updateResult) {
-            writefln("%d new posts found.", updateResult.newPosts.length);
-        };
-
-        // Print error message if a link download fails
-        chandl.linkDownloadFailed = (url, message) {
-            writefln("Failed to download file: [%s]: %s.", url, message);
-        };
-
-        chandl.download();
-        //chandl.rebuild();
-    }
-
-    foreach(url; args[1..$]) {
         // Download thread once
-        downloadThread(url);
+        project.download();
     }
 
     if (watchThreads.length > 0) {
         import core.thread;
 
+        ChandlerProject[] watchProjects;
+        foreach(source; watchThreads) {
+            auto project = getProjectFromSource(source);
+            if (project is null) {
+                continue;
+            }
+
+            // We got a valid project - add it to the pile
+            watchProjects ~= project;
+        }
+
         while(true) {
-            foreach(url; watchThreads) {
+            foreach(project; watchProjects) {
+                writeln("Downloading thread ", project.url, " to ", project.path);
+
                 // Download thread
-                downloadThread(url);
+                project.download();
             }
 
             // Do countdown
@@ -135,6 +118,59 @@ int main(string[] args)
     }
 
     return 0;
+}
+
+ChandlerProject getProjectFromSource(in string source) {
+    enum getHostname = regex(`(\w+)://([\w\.]+)`);
+
+    ChandlerProject project;
+
+    auto m = source.matchFirst(getHostname);
+    if (m.empty) {
+        // Source is not an URL
+        if (!source.exists()) {
+            writeln(source, " is neither a valid URL nor an existing path.");
+            return null;
+        }
+        // Source is an existing path - try to load project
+        project = ChandlerProject.load(source);
+    }
+    else {
+        auto hostname = m[2];
+        // TODO: Identify site by hostname?
+
+        project = createProject(source);
+    }
+
+    project.downloadProgressTracker = downloadProgressTracker;
+
+    // Print info when a thread update occurred
+    project.threadUpdated = (updateResult) {
+        writefln("%d new posts found.", updateResult.newPosts.length);
+    };
+
+    // Print error message if a link download fails
+    project.linkDownloadFailed = (url, message) {
+        writefln("Failed to download file: [%s]: %s.", url, message);
+    };
+
+    project.save();
+    return project;
+}
+
+ChandlerProject createProject(in string url) {
+    enum getThreadId = regex(`(\w+)://([\w\.]+)/(\w+)/thread/(\d+)`);
+
+    auto m = url.matchFirst(getThreadId);
+    if (m.empty) {
+        writeln("Error getting thread ID for: ", url);
+        return null;
+    }
+
+    auto savePath = buildPath(basePath, "threads", text(m[4]));
+
+    auto project = ChandlerProject.create(savePath, url);
+    return project;
 }
 
 void writeUsage(in string executable) {
