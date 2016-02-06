@@ -115,6 +115,11 @@ class FourChanThread : IThread {
 }
 
 class FourChanThreadParser : IThreadParser {
+    static this() {
+        import chandl.parsers;
+        registerParser("4chan", new this());
+    }
+
     IThread parseThread(in char[] html) {
         return new FourChanThread(html);
     }

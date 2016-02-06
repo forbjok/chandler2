@@ -12,6 +12,7 @@ enum ThreadConfigName = "thread.json";
 enum OriginalsDirName = "originals";
 
 struct ThreadConfig {
+    string parser;
     string url;
     string[] downloadExtensions;
 }
@@ -21,10 +22,17 @@ class ChandlerProject : ThreadDownloader {
         string _projectDir;
         string _originalsPath;
         string _threadConfigPath;
+
+        string _parserName;
     }
 
-    private this(in char[] url, in char[] path, in char[] projectDir) {
-        super(url, path);
+    private this(in string parserName, in char[] url, in char[] path, in char[] projectDir) {
+        import chandl.parsers : getParser;
+
+        _parserName = parserName;
+        auto parser = getParser(_parserName);
+
+        super(parser, url, path);
 
         this._projectDir = projectDir.to!string;
         this._originalsPath = buildPath(this._projectDir, OriginalsDirName);
@@ -39,13 +47,13 @@ class ChandlerProject : ThreadDownloader {
     }
 
     /* Create a new project in path, for the given url */
-    static ChandlerProject create(in char[] path, in char[] url) {
+    static ChandlerProject create(in string parserName, in char[] path, in char[] url) {
         // Get absolute path
         auto absolutePath = text(path).absolutePath();
 
         auto projectDir = buildPath(absolutePath, ProjectDirName);
 
-        auto project = new ChandlerProject(url, absolutePath, projectDir);
+        auto project = new ChandlerProject(parserName, url, absolutePath, projectDir);
 
         return project;
     }
@@ -73,7 +81,7 @@ class ChandlerProject : ThreadDownloader {
         ThreadConfig threadConfig;
         threadConfig.deserializeFromJSONValue(jsonConfig);
 
-        auto project = new ChandlerProject(threadConfig.url, absolutePath, projectDir);
+        auto project = new ChandlerProject(threadConfig.parser, threadConfig.url, absolutePath, projectDir);
 
         foreach(ext; threadConfig.downloadExtensions) {
             project.includeExtension(ext);
@@ -89,6 +97,7 @@ class ChandlerProject : ThreadDownloader {
 
         ThreadConfig threadConfig;
         with (threadConfig) {
+            parser = _parserName;
             url = this.url;
             downloadExtensions = this.downloadExtensions;
         }

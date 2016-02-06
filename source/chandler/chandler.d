@@ -8,8 +8,15 @@ import std.stdio;
 import chandler.project;
 
 struct ChandlerConfig {
+    struct Site {
+        string urlRegex;
+        string parser;
+    }
+
     string downloadRootPath;
     string[] downloadExtensions;
+
+    Site[string] sites;
 }
 
 class Chandler {
@@ -22,6 +29,10 @@ class Chandler {
         with (config) {
             downloadRootPath = buildPath(getcwd(), "threads");
             config.downloadExtensions = defaultDownloadExtensions;
+
+            sites = [
+                "boards.4chan.org": ChandlerConfig.Site(`(\w+)://([\w\.]+)/(\w+)/thread/(\d+)`, "4chan"),
+            ];
         }
     }
 
@@ -42,9 +53,16 @@ class Chandler {
         }
         else {
             auto hostname = m[2];
-            // TODO: Identify site by hostname?
+            
+            // Identify site by hostname
+            if (hostname !in config.sites) {
+                writeln("Unsupported site: ", hostname);
+                return null;
+            }
 
-            project = createProjectFromURL(source);
+            auto site = config.sites[hostname];
+
+            project = createProjectFromURL(source, site);
         }
 
         project.downloadProgressTracker = downloadProgressTracker;
@@ -65,18 +83,23 @@ class Chandler {
         project.rebuild();
     }
 
-    private ChandlerProject createProjectFromURL(in string url) {
-        enum getThreadId = regex(`(\w+)://([\w\.]+)/(\w+)/thread/(\d+)`);
+    private ChandlerProject createProjectFromURL(in string url, in ref ChandlerConfig.Site site) {
+        auto urlRegex = regex(site.urlRegex);
 
-        auto m = url.matchFirst(getThreadId);
+        // Split thread URL to get hostname, board name and thread ID
+        auto m = url.matchFirst(urlRegex);
         if (m.empty) {
-            writeln("Error getting thread ID for: ", url);
+            writeln("Error parsing url: ", url);
             return null;
         }
 
-        auto savePath = buildPath(config.downloadRootPath, text(m[4]));
+        auto hostname = text(m[2]);
+        auto board = text(m[3]);
+        auto thread = text(m[4]);
 
-        auto project = ChandlerProject.create(savePath, url);
+        auto savePath = buildPath(config.downloadRootPath, hostname, board, thread);
+
+        auto project = ChandlerProject.create(site.parser, savePath, url);
         return project;
     }
 }

@@ -10,7 +10,6 @@ import reurl;
 import chandl.threadparser;
 import chandl.utils.download;
 import chandl.utils.linkfilter;
-import chandl.parsers.fourchan;
 
 enum defaultDownloadExtensions = [
     "ico",
@@ -81,13 +80,13 @@ class ThreadDownloader {
     void delegate(in UpdateResult updateResult) threadUpdated;
     void delegate(in char[] url, in char[] message) linkDownloadFailed;
 
-    this(in char[] url, in char[] path) {
+    this(IThreadParser parser, in char[] url, in char[] path) {
         import std.functional;
 
         this._url = url.to!string;
         this._path = path.to!string;
 
-        this._parser = new FourChanThreadParser();
+        this._parser = parser;
 
         this.getURL = toDelegate(&curlGetURL);
         this.mapURL = toDelegate(&defaultMapURL);
