@@ -1,10 +1,12 @@
+module chandl.utils.linkfinder;
+
 import std.algorithm;
 import std.array;
 import std.conv;
 
-import threadparser;
-
 import html;
+
+import chandl.threadparser;
 
 struct LinkTag {
     string tag;

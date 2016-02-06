@@ -1,3 +1,5 @@
+module chandl.utils.linkfilter;
+
 import std.algorithm;
 import std.array;
 import std.conv : text;

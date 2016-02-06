@@ -1,3 +1,5 @@
+module cli.utils.breakhandler;
+
 import std.stdio;
 
 static bool isTerminating = false;

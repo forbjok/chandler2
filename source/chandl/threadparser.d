@@ -1,3 +1,5 @@
+module chandl.threadparser;
+
 interface IThread {
     const(char)[] getHtml();
     ILink[] getLinks();

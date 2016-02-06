@@ -1,9 +1,11 @@
+module chandler.project;
+
 import std.conv : text, to;
 import std.file;
 import std.format;
 import std.path;
 
-import chandler;
+public import chandl.downloader;
 
 enum ProjectDirName = ".chandler";
 enum ThreadConfigName = "thread.json";

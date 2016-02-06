@@ -1,12 +1,14 @@
+module chandl.parsers.fourchan;
+
 import std.algorithm;
 import std.array;
-import std.conv;
-
-import threadparser;
-import linkfinder;
+import std.conv : to;
 
 import html;
 import reurl;
+
+import chandl.threadparser;
+import chandl.utils.linkfinder;
 
 private int getPostId(in Node* node) {
     import std.regex;

@@ -1,3 +1,5 @@
+module chandl.utils.download;
+
 import std.conv : to;
 import std.file;
 import std.net.curl;

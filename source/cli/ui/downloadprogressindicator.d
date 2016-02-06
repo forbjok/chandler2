@@ -1,3 +1,5 @@
+module cli.ui.downloadprogressindicator;
+
 import dstatus.status;
 import dstatus.progress;
 import dstatus.terminal;

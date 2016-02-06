@@ -1,13 +1,16 @@
+module chandl.downloader;
+
 import std.algorithm.searching;
-import std.conv;
+import std.conv : to;
 import std.datetime : SysTime;
 import std.net.curl;
 
-import fourchan;
-import linkfilter;
-import threadparser;
 import reurl;
-import download;
+
+import chandl.threadparser;
+import chandl.utils.download;
+import chandl.utils.linkfilter;
+import chandl.parsers.fourchan;
 
 struct DownloadFile {
     string url;
