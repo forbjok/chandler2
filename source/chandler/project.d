@@ -47,16 +47,6 @@ class ChandlerProject : ThreadDownloader {
 
         auto project = new ChandlerProject(url, absolutePath, projectDir);
 
-        // Add default extensions
-        with (project) {
-            includeExtension("ico");
-            includeExtension("css");
-            includeExtension("png");
-            includeExtension("jpg");
-            includeExtension("gif");
-            includeExtension("webm");
-        }
-
         return project;
     }
 

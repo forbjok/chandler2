@@ -12,6 +12,15 @@ import chandl.utils.download;
 import chandl.utils.linkfilter;
 import chandl.parsers.fourchan;
 
+enum defaultDownloadExtensions = [
+    "ico",
+    "css",
+    "png",
+    "jpg",
+    "gif",
+    "webm",
+];
+
 struct DownloadFile {
     string url;
     string destinationPath;
@@ -46,7 +55,7 @@ class ThreadDownloader {
         string _url;
         string _path;
         IThreadParser _parser;
-        string[] _downloadExtensions;
+        string[] _downloadExtensions = defaultDownloadExtensions;
     }
 
     @property string url() {
