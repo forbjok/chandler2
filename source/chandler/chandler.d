@@ -51,6 +51,20 @@ class Chandler {
         return project;
     }
 
+    void rebuildProject(in string source) {
+        // In the case of rebuilds, source MUST be an existing path
+        if (!source.exists()) {
+            writeln(source, " is not a valid path.");
+            return;
+        }
+
+        // Load project
+        auto project = loadSource(source);
+
+        // Rebuild
+        project.rebuild();
+    }
+
     private ChandlerProject createProjectFromURL(in string url) {
         enum getThreadId = regex(`(\w+)://([\w\.]+)/(\w+)/thread/(\d+)`);
 

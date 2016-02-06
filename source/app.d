@@ -12,12 +12,14 @@ import cli.ui.downloadprogresstracker;
 int main(string[] args)
 {
     string[] watchThreads;
+    string[] rebuildProjects;
     int interval = 30;
 
     try {
         // Parse arguments
         auto getoptResult = getopt(args,
             std.getopt.config.bundling,
+            "r|rebuild", &rebuildProjects,
             "w|watch", &watchThreads,
             "i|interval", &interval);
 
@@ -56,6 +58,15 @@ int main(string[] args)
         return project;
     }
 
+    /* Rebuild projects if any were specified */
+    foreach(projectPath; rebuildProjects) {
+        writeln("Rebuilding project at ", projectPath);
+
+        // Rebuild project
+        chandler.rebuildProject(projectPath);
+    }
+
+    /* Download all download-once sources */
     foreach(source; args[1..$]) {
         auto project = loadSource(source);
 
@@ -65,19 +76,21 @@ int main(string[] args)
         project.download();
     }
 
-    if (watchThreads.length > 0) {
-        import core.thread;
-
-        ChandlerProject[] watchProjects;
-        foreach(source; watchThreads) {
-            auto project = loadSource(source);
-            if (project is null) {
-                continue;
-            }
-
-            // We got a valid project - add it to the pile
-            watchProjects ~= project;
+    /* Try to load any sources specified for watching */
+    ChandlerProject[] watchProjects;
+    foreach(source; watchThreads) {
+        auto project = loadSource(source);
+        if (project is null) {
+            continue;
         }
+
+        // We got a valid project - add it to the pile
+        watchProjects ~= project;
+    }
+
+    /* If any valid threads were specified to be watched, watch them. */
+    if (watchProjects.length > 0) {
+        import core.thread;
 
         while(true) {
             foreach(project; watchProjects) {
