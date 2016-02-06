@@ -120,6 +120,10 @@ class FourChanThreadParser : IThreadParser {
         registerParser("4chan", new this());
     }
 
+    @property bool supportsUpdate() {
+        return true;
+    }
+
     IThread parseThread(in char[] html) {
         return new FourChanThread(html);
     }

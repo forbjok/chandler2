@@ -153,6 +153,10 @@ class TinyboardThreadParser : IThreadParser {
         registerParser("tinyboard", new this());
     }
 
+    @property bool supportsUpdate() {
+        return true;
+    }
+
     IThread parseThread(in char[] html) {
         return new TinyboardThread(html);
     }

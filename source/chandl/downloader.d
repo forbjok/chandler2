@@ -123,8 +123,9 @@ class ThreadDownloader {
         auto outputHTMLPath = buildPath(this._path, "thread.html");
         const(char)[] outputHTML;
 
-        if (outputHTMLPath.exists()) {
-            /* If the output file already exists, update the existing
+        if (_parser.supportsUpdate && outputHTMLPath.exists()) {
+            /* If the parser supports updating (merging) threads
+               and the output file already exists, update the existing
                file with new posts from the HTML. */
             auto baseHTML = readText(outputHTMLPath);
             auto baseThread = this._parser.parseThread(baseHTML);

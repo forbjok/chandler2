@@ -53,14 +53,18 @@ class Chandler {
         }
         else {
             auto hostname = m[2];
-            
-            // Identify site by hostname
-            if (hostname !in config.sites) {
-                writeln("Unsupported site: ", hostname);
-                return null;
-            }
 
-            auto site = config.sites[hostname];
+            ChandlerConfig.Site site;
+            // Identify site by hostname
+            if (hostname in config.sites) {
+                site = config.sites[hostname];
+            }
+            else {
+                with (site) {
+                    parser = "basic";
+                    urlRegex = `.*/(\d+)`;
+                }
+            }
 
             project = createProjectFromURL(source, site);
         }

@@ -15,6 +15,7 @@ interface ILink {
 }
 
 interface IThreadParser {
+    @property bool supportsUpdate();
     IThread parseThread(in char[] html);
 }
 
