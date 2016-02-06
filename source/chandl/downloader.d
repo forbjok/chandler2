@@ -41,7 +41,7 @@ const(char)[] curlGetURL(in char[] url) {
     return get(url);
 }
 
-class ChandlerThread {
+class ThreadDownloader {
     private {
         string _url;
         string _path;

@@ -16,7 +16,7 @@ struct ThreadConfig {
     string[] downloadExtensions;
 }
 
-class ChandlerProject : ChandlerThread {
+class ChandlerProject : ThreadDownloader {
     private {
         string _projectDir;
         string _originalsPath;
