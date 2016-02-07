@@ -6,13 +6,13 @@ import dstatus.terminal;
 
 class DownloadProgressIndicator : Status {
     private {
-        int _stepWidth;
-        int _descriptionWidth;
-        int _percentTextWidth;
-        int _progressBarWidth;
+        size_t _stepWidth;
+        size_t _descriptionWidth;
+        size_t _percentTextWidth;
+        size_t _progressBarWidth;
 
-        int _stepCount;
-        int _currentStep;
+        size_t _stepCount;
+        size_t _currentStep;
         string _stepDescription;
 
         string _prevReport;
