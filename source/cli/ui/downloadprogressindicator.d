@@ -18,7 +18,7 @@ class DownloadProgressIndicator : Status {
         string _prevReport;
     }
 
-    this(in int stepCount) {
+    this(in size_t stepCount) {
         auto width = getTerminalWidth();
         _stepCount = stepCount;
 
