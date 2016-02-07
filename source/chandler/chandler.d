@@ -1,5 +1,6 @@
 module chandler.chandler;
 
+import std.array : array;
 import std.file : exists, getcwd;
 import std.path : buildPath;
 import std.regex : matchFirst, regex;
@@ -31,7 +32,7 @@ class Chandler {
             config.downloadExtensions = defaultDownloadExtensions;
 
             sites = [
-                "boards.4chan.org": ChandlerConfig.Site(`(\w+)://([\w\.]+)/(\w+)/thread/(\d+)`, "4chan"),
+                "boards.4chan.org": ChandlerConfig.Site(`https?://([\w\.]+)/(\w+)/thread/(\d+)`, "4chan"),
             ];
         }
     }
@@ -62,7 +63,7 @@ class Chandler {
             else {
                 with (site) {
                     parser = "basic";
-                    urlRegex = `.*/(\d+)`;
+                    urlRegex = `https?://([\w\.]+)/.*/(\d+)`;
                 }
             }
 
@@ -97,11 +98,7 @@ class Chandler {
             return null;
         }
 
-        auto hostname = text(m[2]);
-        auto board = text(m[3]);
-        auto thread = text(m[4]);
-
-        auto savePath = buildPath(config.downloadRootPath, hostname, board, thread);
+        auto savePath = buildPath([config.downloadRootPath] ~ m.array()[1..$]);
 
         auto project = ChandlerProject.create(site.parser, savePath, url);
         return project;
