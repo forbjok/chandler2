@@ -9,6 +9,7 @@ import reurl;
 
 import chandl.threadparser;
 import chandl.utils.download;
+import chandl.utils.htmlutils;
 import chandl.utils.linkfilter;
 
 enum defaultDownloadExtensions = [
@@ -120,7 +121,7 @@ class ThreadDownloader {
             /* If the parser supports updating (merging) threads
                and the output file already exists, update the existing
                file with new posts from the HTML. */
-            auto baseHTML = readText(outputHTMLPath);
+            auto baseHTML = readHTML(outputHTMLPath);
             auto baseThread = this._parser.parseThread(baseHTML);
 
             auto updateResult = baseThread.update(html);

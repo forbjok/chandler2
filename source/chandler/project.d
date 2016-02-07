@@ -5,6 +5,8 @@ import std.file;
 import std.format;
 import std.path;
 
+import chandl.utils.htmlutils;
+
 public import chandl.downloader;
 
 enum ProjectDirName = ".chandler";
@@ -49,9 +51,8 @@ class ChandlerProject : ThreadDownloader {
         mkdirRecurse(_originalsPath);
 
         downloadFile(text(url), filename, onProgress);
-        auto html = readText(filename);
 
-        return html;
+        return readHTML(filename);
     }
 
     /* Create a new project in path, for the given url */
@@ -148,7 +149,7 @@ class ChandlerProject : ThreadDownloader {
         {
             writefln("Processing %s...", filename.baseName);
 
-            auto html = readText(filename);
+            auto html = readHTML(filename);
             this.processHTML(html);
         }
     }
