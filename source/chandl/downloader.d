@@ -182,6 +182,12 @@ class ThreadDownloader {
         foreach(link; links) {
             auto absoluteUrl = (pBaseURL ~ link.url).toString();
 
+            if (link.tag == "script") {
+                // Purge all script links, lest they cause extreme slowness in loading saved HTMLs
+                link.url = "";
+                continue;
+            }
+
             if (!absoluteUrl.linkHasExtension(this._downloadExtensions))
                 continue;
 
