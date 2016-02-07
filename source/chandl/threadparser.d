@@ -23,3 +23,9 @@ struct UpdateResult {
     int[] newPosts;
     ILink[] newLinks;
 }
+
+class ThreadParseException : Exception {
+    this(string msg) {
+        super("Error parsing thread: " ~ msg);
+    }
+}

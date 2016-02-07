@@ -140,12 +140,14 @@ class ChandlerProject : ThreadDownloader {
 
     /* Rebuild thread from original HTMLs */
     void rebuild() {
-        import std.algorithm.iteration;
-        import std.algorithm.sorting;
-        import std.array;
-        import std.file;
-        import std.stdio;
-        import std.string;
+        import std.algorithm.iteration : filter, map;
+        import std.algorithm.sorting : sort;
+        import std.array : array;
+        import std.file : exists;
+        import std.stdio : writeln;
+        import std.string : endsWith;
+
+        import chandl.threadparser : ThreadParseException;
 
         auto threadHTMLPath = buildPath(this.path, "thread.html");
         if (threadHTMLPath.exists()) {
@@ -163,10 +165,15 @@ class ChandlerProject : ThreadDownloader {
         writeln("Rebuilding thread from originals...");
         foreach(filename; originalFilenames)
         {
-            writefln("Processing %s...", filename.baseName);
+            writeln("Processing ", filename.baseName, "...");
 
-            auto html = readHTML(filename);
-            this.processHTML(html);
+            try {
+                auto html = readHTML(filename);
+                this.processHTML(html);
+            }
+            catch(ThreadParseException ex) {
+                writeln(ex.msg);
+            }
         }
     }
 }

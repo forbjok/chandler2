@@ -46,12 +46,18 @@ class TinyboardThread : IThread {
     }
 
     this(in char[] html) {
-        this._document = createDocument(html);
+        _document = createDocument(html);
 
         /* Tinyboard doesn't have a class for the thread container,
            so just get the first post's parent element.
            It should be the thread container */
-        this._threadNode = this._document.querySelector("div.post").parent;
+        auto firstPost = _document.querySelector("div.post");
+        if (firstPost is null)
+            throw new ThreadParseException("Could not locate first post.");
+
+        _threadNode = firstPost.parent;
+        if (_threadNode is null)
+            throw new ThreadParseException("Could not locate thread element.");
     }
 
     ILink[] getLinks() {

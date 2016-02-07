@@ -30,9 +30,11 @@ class FourChanThread : IThread {
     }
 
     this(in char[] html) {
-        this._document = createDocument(html);
+        _document = createDocument(html);
 
-        this._threadNode = this._document.querySelector("div.thread");
+        _threadNode = _document.querySelector("div.thread");
+        if (_threadNode is null)
+            throw new ThreadParseException("Could not locate thread element.");
     }
 
     ILink[] getLinks() {
