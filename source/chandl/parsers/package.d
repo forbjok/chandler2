@@ -11,9 +11,15 @@ void registerParser(in string name, IThreadParser parser) {
 }
 
 IThreadParser getParser(in string name) {
-    if (name in parsers) {
-        return parsers[name];
+    if (name !in parsers) {
+        throw new ParserNotFoundException(name);
     }
 
-    return null;
+    return parsers[name];
+}
+
+class ParserNotFoundException : Exception {
+    this(in string name) {
+        super("Parser not found: " ~ name);
+    }
 }
