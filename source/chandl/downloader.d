@@ -96,18 +96,25 @@ class ThreadDownloader {
     }
 
     void download() {
+        const(char)[] html;
+
         downloadProgressTracker.started([DownloadFile(url, "")]);
-        auto html = downloadThread((c, t) => downloadProgressTracker.fileProgress(c, t));
+        auto success = downloadThread(html, (c, t) => downloadProgressTracker.fileProgress(c, t));
         downloadProgressTracker.completed();
+
+        if (!success) {
+            return;
+        }
 
         this.processHTML(html);
     }
 
-    protected const(char)[] downloadThread(void delegate(in size_t current, in size_t total) onProgress) {
+    protected bool downloadThread(out const(char)[] html, void delegate(in size_t current, in size_t total) onProgress) {
         import std.net.curl : get;
 
         // TODO: Fix already UTF-8 encoded pages getting incorrectly UTF8-decoded, potentially resulting in corrupted characters
-        return getFile(url, onProgress);
+        html = getFile(url, onProgress);
+        return true;
     }
 
     protected void processHTML(in char[] html) {
@@ -191,7 +198,8 @@ class ThreadDownloader {
 
             try {
                 // Download file
-                downloadFile(dl.url, dl.destinationPath, (c, t) => downloadProgressTracker.fileProgress(c, t));
+                string[string] headers;
+                downloadFile(dl.url, dl.destinationPath, headers, (c, t) => downloadProgressTracker.fileProgress(c, t));
 
                 downloadProgressTracker.fileCompleted(dl);
             }

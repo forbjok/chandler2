@@ -1,6 +1,7 @@
 module chandler.project;
 
 import std.conv : text, to;
+import std.datetime : Clock, SysTime, UTC;
 import std.file;
 import std.format;
 import std.path;
@@ -26,6 +27,9 @@ class ChandlerProject : ThreadDownloader {
         string _threadConfigPath;
 
         string _parserName;
+
+        bool _hasBeenDownloaded = false;
+        SysTime _lastDownloadedTime;
     }
 
     private this(in string parserName, in char[] url, in char[] path, in char[] projectDir) {
@@ -41,18 +45,35 @@ class ChandlerProject : ThreadDownloader {
         this._threadConfigPath = buildPath(this._projectDir, ThreadConfigName);
     }
 
-    override const(char)[] downloadThread(void delegate(in size_t current, in size_t total) onProgress) {
-        import std.datetime;
+    override bool downloadThread(out const(char)[] html, void delegate(in size_t current, in size_t total) onProgress) {
         import chandl.utils.download : downloadFile;
+        import chandl.utils.rfc822datetime : toRFC822DateTime;
 
-        auto unixTime = Clock.currTime(UTC()).toUnixTime();
+        auto now = Clock.currTime(UTC());
+        auto unixTime = now.toUnixTime();
         auto filename = buildPath(_originalsPath, "%d.html".format(unixTime));
 
         mkdirRecurse(_originalsPath);
 
-        downloadFile(text(url), filename, onProgress);
+        string[string] headers;
+        if (_hasBeenDownloaded) {
+            headers["If-Modified-Since"] = _lastDownloadedTime.toRFC822DateTime();
+        }
 
-        return readHTML(filename);
+        auto status = downloadFile(text(url), filename, headers, onProgress);
+        if (status.code == 304) {
+            import std.stdio;
+            writeln("HUUE?");
+            return false;
+        }
+        else if (status.code != 200) {
+            return false;
+        }
+
+        _lastDownloadedTime = now;
+        _hasBeenDownloaded = true;
+        html = text(readHTML(filename));
+        return true;
     }
 
     /* Create a new project in path, for the given url */
