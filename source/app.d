@@ -46,13 +46,15 @@ int main(string[] args)
 
         // Print info when a thread update occurred
         project.threadUpdated = (updateResult) {
-            writefln("%d new posts found.", updateResult.newPosts.length);
+            writefln("Thread updated. %d new posts found.", updateResult.newPosts.length);
         };
 
         // Print error message if a link download fails
         project.linkDownloadFailed = (url, message) {
             writefln("Failed to download file: [%s]: %s.", url, message);
         };
+
+        project.notChanged = () => writeln("No changes since last update.");
 
         project.save();
         return project;

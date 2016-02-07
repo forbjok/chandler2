@@ -1,53 +1,108 @@
 module chandl.utils.download;
 
 import std.conv : to;
+import std.datetime : parseRFC822DateTime, SysTime;
 import std.file;
 import std.net.curl : download, get, HTTP;
 import std.path;
+
+enum LastModifiedHeader = "last-modified";
+enum IfModifiedSinceHeader = "if-modified-since";
 
 struct HTTPStatus {
     ushort code;
     string reason;
 }
 
-HTTPStatus downloadFile(in string url, in string destinationPath, in string[string] requestHeaders, void delegate(in size_t current, in size_t total) onProgress = null) {
-    // Ensure that destination directory exists
-    auto destinationDir = destinationPath.dirName();
-    mkdirRecurse(destinationDir);
+struct DownloadResult {
+    HTTPStatus status;
+    alias status this;
 
-    // If an exception is thrown during download, delete the broken file
-    scope(failure) std.file.remove(destinationPath);
-
-    auto http = HTTP();
-
-    if (onProgress !is null) {
-        http.onProgress = (dlTotal, dlNow, ulTotal, ulNow) {
-            onProgress(dlNow, dlTotal);
-            return 0;
-        };
-    }
-
-    // Add request headers
-    foreach(name, value; requestHeaders) {
-        http.addRequestHeader(name, value);
-    }
-
-    // Download file
-    download(url, destinationPath, http);
-
-    return HTTPStatus(http.statusLine.code, http.statusLine.reason);
+    SysTime lastModified;
 }
 
-char[] getFile(in string url, void delegate(in size_t current, in size_t total) onProgress = null) {
-    auto http = HTTP();
+alias DownloadProgressCallback = void delegate(in size_t current, in size_t total);
 
-    if (onProgress !is null) {
-        http.onProgress = (dlTotal, dlNow, ulTotal, ulNow) {
-            onProgress(dlNow, dlTotal);
-            return 0;
-        };
+class FileDownloader {
+    private {
+        string _url;
+
+        bool _useIfModifiedSince = false;
+        SysTime _ifModifiedSince;
     }
 
-    // Get file
-    return get(url, http);
+    DownloadProgressCallback onProgress;
+
+    this(in string url) {
+        _url = url;
+    }
+
+    void setIfModifiedSince(in SysTime timestamp) {
+        _useIfModifiedSince = true;
+        _ifModifiedSince = timestamp;
+    }
+
+    DownloadResult download(in string destinationPath) {
+        import chandl.utils.rfc822datetime : toRFC822DateTime;
+
+        // Ensure that destination directory exists
+        auto destinationDir = destinationPath.dirName();
+        mkdirRecurse(destinationDir);
+
+        // If an exception is thrown during download, delete the incomplete file
+        scope(failure) {
+            if (destinationPath.exists()) {
+                std.file.remove(destinationPath);
+            }
+        }
+
+        auto http = HTTP();
+
+        if (onProgress !is null) {
+            http.onProgress = (dlTotal, dlNow, ulTotal, ulNow) {
+                onProgress(dlNow, dlTotal);
+                return 0;
+            };
+        }
+
+        if (_useIfModifiedSince) {
+            // I'd use setTimeCondition, but it appears to be broken, so manual addRequestHeader it is.
+            //http.setTimeCondition(HTTP.TimeCond.ifmodsince, _ifModifiedSince);
+            http.addRequestHeader(IfModifiedSinceHeader, _ifModifiedSince.toRFC822DateTime());
+        }
+
+        // Download file
+        std.net.curl.download(_url, destinationPath, http);
+
+        return DownloadResult(HTTPStatus(http.statusLine.code, http.statusLine.reason), http.getLastModified());
+    }
+
+    DownloadResult get(out const(char)[] buffer) {
+        import chandl.utils.rfc822datetime : toRFC822DateTime;
+
+        auto http = HTTP();
+
+        if (onProgress !is null) {
+            http.onProgress = (dlTotal, dlNow, ulTotal, ulNow) {
+                onProgress(dlNow, dlTotal);
+                return 0;
+            };
+        }
+
+        if (_useIfModifiedSince) {
+            http.addRequestHeader(IfModifiedSinceHeader, _ifModifiedSince.toRFC822DateTime());
+        }
+
+        buffer = std.net.curl.get(_url, http);
+        return DownloadResult(HTTPStatus(http.statusLine.code, http.statusLine.reason), http.getLastModified());
+    }
+}
+
+private SysTime getLastModified(ref HTTP http) {
+    auto lastModified = SysTime.min();
+    if (LastModifiedHeader in http.responseHeaders) {
+        lastModified = parseRFC822DateTime(http.responseHeaders[LastModifiedHeader]);
+    }
+
+    return lastModified;
 }

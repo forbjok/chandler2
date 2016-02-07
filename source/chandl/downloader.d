@@ -44,6 +44,10 @@ string defaultMapURL(in char[] url) {
     return path.to!string;
 }
 
+alias ThreadUpdatedCallback = void delegate(in UpdateResult updateResult);
+alias NotChangedCallback = void delegate();
+alias LinkDownloadFailedCallback = void delegate(in char[] url, in char[] message);
+
 class ThreadDownloader {
     private {
         string _url;
@@ -70,8 +74,9 @@ class ThreadDownloader {
     string delegate(in char[] url) mapURL;
 
     // Events
-    void delegate(in UpdateResult updateResult) threadUpdated;
-    void delegate(in char[] url, in char[] message) linkDownloadFailed;
+    ThreadUpdatedCallback threadUpdated;
+    NotChangedCallback notChanged;
+    LinkDownloadFailedCallback linkDownloadFailed;
 
     this(IThreadParser parser, in char[] url, in char[] path) {
         import std.functional;
@@ -103,6 +108,10 @@ class ThreadDownloader {
         downloadProgressTracker.completed();
 
         if (!success) {
+            if (notChanged !is null) {
+                notChanged();
+            }
+
             return;
         }
 
@@ -110,10 +119,16 @@ class ThreadDownloader {
     }
 
     protected bool downloadThread(out const(char)[] html, void delegate(in size_t current, in size_t total) onProgress) {
-        import std.net.curl : get;
+        auto downloader = new FileDownloader(url);
+        downloader.onProgress = (c, t) => onProgress(c, t);
 
         // TODO: Fix already UTF-8 encoded pages getting incorrectly UTF8-decoded, potentially resulting in corrupted characters
-        html = getFile(url, onProgress);
+        auto result = downloader.get(html);
+
+        if (result.status.code != 200) {
+            return false;
+        }
+
         return true;
     }
 
@@ -198,8 +213,10 @@ class ThreadDownloader {
 
             try {
                 // Download file
-                string[string] headers;
-                downloadFile(dl.url, dl.destinationPath, headers, (c, t) => downloadProgressTracker.fileProgress(c, t));
+                auto downloader = new FileDownloader(dl.url);
+                downloader.onProgress = (c, t) => downloadProgressTracker.fileProgress(c, t);
+
+                downloader.download(dl.destinationPath);
 
                 downloadProgressTracker.fileCompleted(dl);
             }

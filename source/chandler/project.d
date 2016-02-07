@@ -28,8 +28,7 @@ class ChandlerProject : ThreadDownloader {
 
         string _parserName;
 
-        bool _hasBeenDownloaded = false;
-        SysTime _lastDownloadedTime;
+        SysTime _lastModified = SysTime.min();
     }
 
     private this(in string parserName, in char[] url, in char[] path, in char[] projectDir) {
@@ -46,8 +45,7 @@ class ChandlerProject : ThreadDownloader {
     }
 
     override bool downloadThread(out const(char)[] html, void delegate(in size_t current, in size_t total) onProgress) {
-        import chandl.utils.download : downloadFile;
-        import chandl.utils.rfc822datetime : toRFC822DateTime;
+        import chandl.utils.download : FileDownloader;
 
         auto now = Clock.currTime(UTC());
         auto unixTime = now.toUnixTime();
@@ -55,23 +53,20 @@ class ChandlerProject : ThreadDownloader {
 
         mkdirRecurse(_originalsPath);
 
-        string[string] headers;
-        if (_hasBeenDownloaded) {
-            headers["If-Modified-Since"] = _lastDownloadedTime.toRFC822DateTime();
-        }
+        auto downloader = new FileDownloader(url);
+        downloader.onProgress = (c, t) => onProgress(c, t);
+        downloader.setIfModifiedSince(_lastModified);
 
-        auto status = downloadFile(text(url), filename, headers, onProgress);
-        if (status.code == 304) {
-            import std.stdio;
-            writeln("HUUE?");
+        auto result = downloader.download(filename);
+        if (result.code == 304) {
             return false;
         }
-        else if (status.code != 200) {
-            return false;
+        else if (result.code != 200) {
+            throw new Exception("Error downloading thread: " ~ text(result.code, " ", result.reason));
         }
 
-        _lastDownloadedTime = now;
-        _hasBeenDownloaded = true;
+        _lastModified = result.lastModified;
+
         html = text(readHTML(filename));
         return true;
     }
