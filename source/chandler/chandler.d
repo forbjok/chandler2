@@ -61,9 +61,13 @@ class Chandler {
                 site = config.sites[hostname];
             }
             else {
+                // Hostname was not recognized from the site list
                 with (site) {
+                    // Use basic parser
                     parser = "basic";
-                    urlRegex = `https?://([\w\.]+)/.*/(\d+)`;
+
+                    // Use generic regex that matches most common imageboard URL schemes
+                    urlRegex = `https?://([\w\.]+)(?:/(\w+))?(?:/.*)*?(?:/(\d+))`;
                 }
             }
 
