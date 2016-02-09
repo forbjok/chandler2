@@ -8,6 +8,13 @@ import std.stdio;
 
 import chandler.project;
 
+version (Posix) {
+    enum ConfigFileName = ".chandler.json";
+}
+else version (Windows) {
+    enum ConfigFileName = "chandler.json";
+}
+
 struct ChandlerConfig {
     struct Site {
         string urlRegex;
@@ -28,7 +35,7 @@ class Chandler {
         config = ChandlerConfig();
 
         with (config) {
-            downloadPath = buildPath(getcwd(), "threads");
+            downloadPath = buildPath(getUserHomeDir(), "threads");
             config.downloadExtensions = defaultDownloadExtensions;
 
             sites = [
@@ -40,18 +47,9 @@ class Chandler {
     void readConfig() {
         import std.file : readText;
         import jsonserialized;
-        import stdx.data.json : toJSONValue, toJSON;
+        import stdx.data.json : toJSONValue;
 
-        version (Posix) {
-            import std.path : expandTilde;
-
-            auto configPath = buildPath("~", ".chandler.json");
-        }
-        else version (Windows) {
-            import std.process : environment;
-
-            auto configPath = buildPath(environment["USERPROFILE"], "chandler.json");
-        }
+        auto configPath = buildPath(getUserHomeDir(), ConfigFileName);
 
         if (!configPath.exists()) {
             return;
@@ -131,5 +129,16 @@ class Chandler {
 
         auto project = ChandlerProject.create(site.parser, savePath, url);
         return project;
+    }
+}
+
+private string getUserHomeDir() {
+    import std.process : environment;
+
+    version (Posix) {
+        return environment["HOME"];
+    }
+    else version (Windows) {
+        return environment["USERPROFILE"];
     }
 }
