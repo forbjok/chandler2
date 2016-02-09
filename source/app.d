@@ -39,9 +39,10 @@ int main(string[] args)
 
     auto chandler = new Chandler();
     chandler.downloadProgressTracker = new DownloadProgressTracker();
+    chandler.readConfig();
 
     if (destination.length > 0) {
-        chandler.config.downloadRootPath = destination.absolutePath();
+        chandler.config.downloadPath = destination.absolutePath();
     }
 
     auto loadSource(in string source) {

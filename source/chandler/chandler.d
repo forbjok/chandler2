@@ -14,7 +14,7 @@ struct ChandlerConfig {
         string parser;
     }
 
-    string downloadRootPath;
+    string downloadPath;
     string[] downloadExtensions;
 
     Site[string] sites;
@@ -28,13 +28,38 @@ class Chandler {
         config = ChandlerConfig();
 
         with (config) {
-            downloadRootPath = buildPath(getcwd(), "threads");
+            downloadPath = buildPath(getcwd(), "threads");
             config.downloadExtensions = defaultDownloadExtensions;
 
             sites = [
                 "boards.4chan.org": ChandlerConfig.Site(`https?://([\w\.]+)/(\w+)/thread/(\d+)`, "4chan"),
             ];
         }
+    }
+
+    void readConfig() {
+        import std.file : readText;
+        import jsonserialized;
+        import stdx.data.json : toJSONValue, toJSON;
+
+        version (Posix) {
+            import std.path : expandTilde;
+
+            auto configPath = buildPath("~", ".chandler.json");
+        }
+        else version (Windows) {
+            import std.process : environment;
+
+            auto configPath = buildPath(environment["USERPROFILE"], "chandler.json");
+        }
+
+        if (!configPath.exists()) {
+            return;
+        }
+
+        auto configJson = readText(configPath);
+        auto configJsonValue = configJson.toJSONValue();
+        config.deserializeFromJSONValue(configJsonValue);
     }
 
     ChandlerProject loadSource(in string source) {
@@ -102,7 +127,7 @@ class Chandler {
             return null;
         }
 
-        auto savePath = buildPath([config.downloadRootPath] ~ m.array()[1..$]);
+        auto savePath = buildPath([config.downloadPath] ~ m.array()[1..$]);
 
         auto project = ChandlerProject.create(site.parser, savePath, url);
         return project;
