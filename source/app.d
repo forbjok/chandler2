@@ -1,5 +1,5 @@
 import std.getopt : getopt;
-import std.path : baseName;
+import std.path : absolutePath, baseName;
 import std.stdio;
 
 import dstatus.status;
@@ -11,6 +11,7 @@ import cli.ui.downloadprogresstracker;
 
 int main(string[] args)
 {
+    string destination;
     string[] watchThreads;
     string[] rebuildProjects;
     int interval = 30;
@@ -19,9 +20,10 @@ int main(string[] args)
         // Parse arguments
         auto getoptResult = getopt(args,
             std.getopt.config.bundling,
+            "d|destination", &destination,
+            "i|interval", &interval,
             "r|rebuild", &rebuildProjects,
-            "w|watch", &watchThreads,
-            "i|interval", &interval);
+            "w|watch", &watchThreads);
 
         if (getoptResult.helpWanted) {
             // If user wants help, give it to them
@@ -37,6 +39,10 @@ int main(string[] args)
 
     auto chandler = new Chandler();
     chandler.downloadProgressTracker = new DownloadProgressTracker();
+
+    if (destination.length > 0) {
+        chandler.config.downloadRootPath = destination.absolutePath();
+    }
 
     auto loadSource(in string source) {
         auto project = chandler.loadSource(source);
