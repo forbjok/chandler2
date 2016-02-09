@@ -58,6 +58,12 @@ class Chandler {
         auto configJson = readText(configPath);
         auto configJsonValue = configJson.toJSONValue();
         config.deserializeFromJSONValue(configJsonValue);
+
+        // Perform tilde (user home directory) expansion for posix systems
+        version (Posix) {
+            import std.path : expandTilde;
+            config.downloadPath = config.downloadPath.expandTilde();
+        }
     }
 
     ChandlerProject loadSource(in string source) {
