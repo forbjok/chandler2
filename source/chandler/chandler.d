@@ -35,7 +35,7 @@ class Chandler {
         config = ChandlerConfig();
 
         with (config) {
-            downloadPath = buildPath(getUserHomeDir(), "threads");
+            downloadPath = buildPath(getDocumentsDirectory(), "threads");
             config.downloadExtensions = defaultDownloadExtensions;
 
             sites = [
@@ -140,5 +140,22 @@ private string getUserHomeDir() {
     }
     else version (Windows) {
         return environment["USERPROFILE"];
+    }
+}
+
+private string getDocumentsDirectory() {
+    version (Posix) {
+        return getUserHomeDir();
+    }
+    else version (Windows) {
+        import core.stdc.wchar_ : wcslen;
+        import core.sys.windows.shlobj;
+        import core.sys.windows.windef;
+
+        WCHAR[MAX_PATH] myDocumentsPath;
+
+        SHGetFolderPath(null, CSIDL_PERSONAL, null, 0, myDocumentsPath.ptr);
+
+        return myDocumentsPath[0..wcslen(myDocumentsPath.ptr)].to!string;
     }
 }
