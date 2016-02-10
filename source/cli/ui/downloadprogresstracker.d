@@ -3,7 +3,7 @@ module cli.ui.downloadprogresstracker;
 import std.conv : to;
 import std.stdio;
 
-import chandl.downloader;
+import chandl.threaddownloader;
 
 import cli.ui.downloadprogressindicator;
 

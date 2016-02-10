@@ -1,4 +1,4 @@
-module chandl.downloader;
+module chandl.threaddownloader;
 
 import std.algorithm.searching;
 import std.conv : text, to;

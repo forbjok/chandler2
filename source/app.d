@@ -3,7 +3,7 @@ import std.path : absolutePath, baseName;
 import std.stdio;
 
 import dstatus.status;
-import chandl.downloader;
+import chandl.threaddownloader;
 import chandler;
 
 import cli.utils.breakhandler;

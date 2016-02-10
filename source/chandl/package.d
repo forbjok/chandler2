@@ -1,3 +1,3 @@
 module chandl;
 
-public import chandl.downloader;
+public import chandl.threaddownloader;

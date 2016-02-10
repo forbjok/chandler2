@@ -8,7 +8,7 @@ import std.path;
 
 import chandl.utils.htmlutils;
 
-public import chandl.downloader;
+public import chandl.threaddownloader;
 
 enum ProjectDirName = ".chandler";
 enum ThreadConfigName = "thread.json";
