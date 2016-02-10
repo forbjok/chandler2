@@ -14,7 +14,7 @@ class FourChanThread : MergingThread {
         Node* _threadNode;
     }
 
-    this(in char[] html) {
+    this(in const(char)[] html) {
         super(html);
 
         _threadNode = _document.querySelector("div.thread");
@@ -58,7 +58,7 @@ class FourChanThread : MergingThread {
         _threadNode.appendChild(newPostElement);
     }
 
-    override MergingThread parseThread(in char[] html) {
+    override MergingThread parseThread(in const(char)[] html) {
         return new FourChanThread(html);
     }
 }
@@ -73,7 +73,7 @@ class FourChanThreadParser : IThreadParser {
         return true;
     }
 
-    IThread parseThread(in char[] html) {
+    IThread parseThread(in const(char)[] html) {
         return new FourChanThread(html);
     }
 }

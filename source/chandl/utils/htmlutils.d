@@ -1,18 +1,15 @@
 module chandl.utils.htmlutils;
 
+import std.conv : to;
 import std.file : read, readText;
 import std.utf : UTFException;
 
-const(char)[] readHTML(in string filename) {
-
-    const(char)[] html;
+string readHTML(in string filename) {
     try {
-        html = readText(filename);
+        return readText(filename);
     }
     catch (UTFException) {
         // If file is not valid UTF-8, read it raw
-        html = cast(char[])read(filename);
+        return read(filename).to!string;
     }
-
-    return html;
 }

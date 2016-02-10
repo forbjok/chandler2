@@ -4,7 +4,7 @@ interface IThread {
     const(char)[] getHtml();
     ILink[] getLinks();
 
-    UpdateResult update(in char[] newHtml);
+    UpdateResult update(in const(char)[] newHtml);
 }
 
 interface ILink {
@@ -16,7 +16,7 @@ interface ILink {
 
 interface IThreadParser {
     @property bool supportsUpdate();
-    IThread parseThread(in char[] html);
+    IThread parseThread(in const(char)[] html);
 }
 
 struct UpdateResult {

@@ -10,11 +10,11 @@ import reurl;
 
 @safe:
 
-bool linkHasExtension(in char[] link, in string[] extensions) {
-    auto url = text(link).parseURL();
+bool linkHasExtension(in string link, in string[] extensions) {
+    auto url = link.parseURL();
     auto filterExtensions = regex(`/[\w\-\./]+\.(?:` ~ extensions.join("|") ~ `)`);
 
-    auto absoluteUrl = url ~ text(link);
+    auto absoluteUrl = url ~ link;
     auto m = absoluteUrl.path.matchFirst(filterExtensions);
 
     return !m.empty;

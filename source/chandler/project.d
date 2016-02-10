@@ -31,7 +31,7 @@ class ChandlerProject : ThreadDownloader {
         SysTime _lastModified = SysTime.min();
     }
 
-    private this(in string parserName, in char[] url, in char[] path, in char[] projectDir) {
+    private this(in string parserName, in string url, in string path, in string projectDir) {
         import chandl.parsers : getParser;
 
         _parserName = parserName;
@@ -72,7 +72,7 @@ class ChandlerProject : ThreadDownloader {
     }
 
     /* Create a new project in path, for the given url */
-    static ChandlerProject create(in string parserName, in char[] path, in char[] url) {
+    static ChandlerProject create(in string parserName, in string path, in string url) {
         // Get absolute path
         auto absolutePath = text(path).absolutePath();
 
@@ -84,7 +84,7 @@ class ChandlerProject : ThreadDownloader {
     }
 
     /* Load project from a path */
-    static ChandlerProject load(in char[] path) {
+    static ChandlerProject load(in string path) {
         import jsonserialized;
         import stdx.data.json;
 
@@ -149,14 +149,14 @@ class ChandlerProject : ThreadDownloader {
 
         import chandl.threadparser : ThreadParseException;
 
-        auto threadHTMLPath = buildPath(this.path, "thread.html");
+        auto threadHTMLPath = buildPath(path, "thread.html");
         if (threadHTMLPath.exists()) {
             std.file.remove(threadHTMLPath);
         }
 
         /* Fetch a list of all original htmls sorted by name
            (which is a unix timestamp, and should be in download order) */
-        auto originalFilenames = this._originalsPath.dirEntries(SpanMode.shallow)
+        auto originalFilenames = _originalsPath.dirEntries(SpanMode.shallow)
             .filter!(e => e.isFile && e.name.endsWith(".html"))
             .map!(e => e.name)
             .array()

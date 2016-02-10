@@ -14,7 +14,7 @@ abstract class MergingThread : IThread {
         Document _document;
     }
 
-    this(in char[] html) {
+    this(in const(char)[] html) {
         _document = createDocument(html);
     }
 
@@ -22,7 +22,7 @@ abstract class MergingThread : IThread {
     protected abstract Node* getPost(in int id);
     protected abstract int getPostId(in Node* postElement);
     protected abstract void appendPost(Node* newPostElement);
-    protected abstract MergingThread parseThread(in char[] html);
+    protected abstract MergingThread parseThread(in const(char)[] html);
 
     ILink[] getLinks() {
         auto links = findLinks(&_document, _document.root);
@@ -33,7 +33,7 @@ abstract class MergingThread : IThread {
         return _document.root.html;
     }
 
-    UpdateResult update(in char[] newHtml) {
+    UpdateResult update(in const(char)[] newHtml) {
         import std.algorithm.iteration;
         import std.algorithm.setops;
 

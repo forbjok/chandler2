@@ -34,19 +34,19 @@ interface IDownloadProgressTracker {
     void completed();
 }
 
-string defaultMapURL(in char[] url) {
+string defaultMapURL(in string url) {
     import std.path : dirSeparator;
     import std.string;
 
-    auto purl = text(url).parseURL();
+    auto purl = url.parseURL();
     auto path = purl.hostname ~ purl.path.replace("/", dirSeparator);
 
-    return path.to!string;
+    return path;
 }
 
 alias ThreadUpdatedCallback = void delegate(in UpdateResult updateResult);
 alias NotChangedCallback = void delegate();
-alias LinkDownloadFailedCallback = void delegate(in char[] url, in char[] message);
+alias LinkDownloadFailedCallback = void delegate(in string url, in string message);
 
 class ThreadDownloader {
     private {
@@ -71,33 +71,33 @@ class ThreadDownloader {
     IDownloadProgressTracker downloadProgressTracker;
 
     // Customizable functions
-    string delegate(in char[] url) mapURL;
+    string delegate(in string url) mapURL;
 
     // Events
     ThreadUpdatedCallback threadUpdated;
     NotChangedCallback notChanged;
     LinkDownloadFailedCallback linkDownloadFailed;
 
-    this(IThreadParser parser, in char[] url, in char[] path) {
+    this(IThreadParser parser, in string url, in string path) {
         import std.functional;
 
-        this._url = url.to!string;
-        this._path = path.to!string;
+        _url = url;
+        _path = path;
 
-        this._parser = parser;
+        _parser = parser;
 
-        this.mapURL = toDelegate(&defaultMapURL);
+        mapURL = toDelegate(&defaultMapURL);
     }
 
     void includeExtension(in string extension) {
         import std.algorithm.searching;
 
-        if (this._downloadExtensions.canFind(extension)) {
+        if (_downloadExtensions.canFind(extension)) {
             // If this extension already exists, don't add it again
             return;
         }
 
-        this._downloadExtensions ~= extension;
+        _downloadExtensions ~= extension;
     }
 
     void download() {
@@ -115,7 +115,7 @@ class ThreadDownloader {
             return;
         }
 
-        this.processHTML(html);
+        processHTML(html);
     }
 
     protected bool downloadThread(out const(char)[] html, void delegate(in size_t current, in size_t total) onProgress) {
@@ -132,7 +132,7 @@ class ThreadDownloader {
         return true;
     }
 
-    protected void processHTML(in char[] html) {
+    protected void processHTML(in const(char)[] html) {
         import std.file;
         import std.path;
 

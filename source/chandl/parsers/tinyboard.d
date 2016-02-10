@@ -24,7 +24,7 @@ class TinyboardThread : MergingThread {
         Node* _lastPostElement;
     }
 
-    this(in char[] html) {
+    this(in const(char)[] html) {
         super(html);
 
         /* Tinyboard doesn't have a class for the thread container,
@@ -101,7 +101,7 @@ class TinyboardThread : MergingThread {
         _lastPostElement = newPostElement;
     }
 
-    override MergingThread parseThread(in char[] html) {
+    override MergingThread parseThread(in const(char)[] html) {
         return new TinyboardThread(html);
     }
 }
@@ -116,7 +116,7 @@ class TinyboardThreadParser : IThreadParser {
         return true;
     }
 
-    IThread parseThread(in char[] html) {
+    IThread parseThread(in const(char)[] html) {
         return new TinyboardThread(html);
     }
 }

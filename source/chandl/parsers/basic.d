@@ -1,5 +1,7 @@
 module chandl.parsers.basic;
 
+import std.conv : to;
+
 import html;
 
 import chandl.threadparser;
@@ -11,7 +13,7 @@ class BasicThread : IThread {
         Node* _threadNode;
     }
 
-    this(in char[] html) {
+    this(in const(char)[] html) {
         _document = createDocument(html);
     }
 
@@ -24,7 +26,7 @@ class BasicThread : IThread {
         return _document.root.html;
     }
 
-    UpdateResult update(in char[] newHtml) {
+    UpdateResult update(in const(char)[] newHtml) {
         // Update not supported
         throw new Exception("Update not supported.");
     }
@@ -40,7 +42,7 @@ class BasicThreadParser : IThreadParser {
         return false;
     }
 
-    IThread parseThread(in char[] html) {
+    IThread parseThread(in const(char)[] html) {
         return new BasicThread(html);
     }
 }
