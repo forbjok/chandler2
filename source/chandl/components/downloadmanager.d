@@ -1,5 +1,9 @@
 module chandl.components.downloadmanager;
 
+import std.file : remove;
+import std.path : exists;
+import std.range : chain;
+
 import chandl.utils.download;
 
 struct DownloadFile {
@@ -21,13 +25,20 @@ interface IDownloadProgressTracker {
 }
 
 class DownloadManager : IDownloadManager {
+    private {
+        DownloadFile[] _retryFiles;
+    }
+
     IDownloadProgressTracker downloadProgressTracker;
 
     void downloadFiles(in DownloadFile[] files) {
         downloadProgressTracker.started(files);
         scope(exit) downloadProgressTracker.completed();
 
-        foreach(file; files) {
+        auto retryFiles = _retryFiles;
+        _retryFiles.length = 0;
+
+        foreach(file; chain(retryFiles, files)) {
             // Update progress step
             downloadProgressTracker.fileStarted(file);
 
@@ -36,7 +47,21 @@ class DownloadManager : IDownloadManager {
                 auto downloader = new FileDownloader(file.url);
                 downloader.onProgress = (c, t) => downloadProgressTracker.fileProgress(c, t);
 
-                downloader.download(file.destinationPath);
+                auto result = downloader.download(file.destinationPath);
+                if (result.status.code != 200) {
+                    if (file.destinationPath.exists()) {
+                        std.file.remove(file.destinationPath);
+                    }
+
+                    downloadProgressTracker.fileFailed(file, result.status.reason);
+
+                    if (result.status.code != 404) {
+                        // If the status code is not 404 (file not found), retry file later
+                        _retryFiles ~= file;
+                    }
+
+                    continue;
+                }
 
                 downloadProgressTracker.fileCompleted(file);
             }
