@@ -3,7 +3,7 @@ module cli.ui.downloadprogresstracker;
 import std.conv : to;
 import std.stdio;
 
-import chandl.threaddownloader;
+import chandl.components.downloadmanager;
 
 import cli.ui.downloadprogressindicator;
 
@@ -29,7 +29,13 @@ class DownloadProgressTracker : IDownloadProgressTracker {
     void fileCompleted(in DownloadFile file) {
         // Print informational message when a file completes downloading
         _downloadProgress.clear();
-        writefln("%s downloaded.", file.url);
+        writeln(file.url, " downloaded.");
+    }
+
+    void fileFailed(in DownloadFile file, in string reason) {
+        // Print informational message when a file fails to download
+        _downloadProgress.clear();
+        writeln("Download failed for ", file.url, ": ", reason);
     }
 
     void completed() {

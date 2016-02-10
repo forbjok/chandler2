@@ -37,8 +37,8 @@ int main(string[] args)
         return 1;
     }
 
-    auto chandler = new Chandler();
-    chandler.downloadProgressTracker = new DownloadProgressTracker();
+    auto downloadProgressTracker = new DownloadProgressTracker();
+    auto chandler = new Chandler(downloadProgressTracker);
     chandler.readConfig();
 
     if (destination.length > 0) {

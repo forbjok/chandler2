@@ -8,6 +8,7 @@ import std.path : buildPath;
 import reurl;
 
 import chandl.threadparser;
+import chandl.components.downloadmanager;
 import chandl.utils.download;
 import chandl.utils.htmlutils;
 import chandl.utils.linkfilter;
@@ -20,19 +21,6 @@ enum defaultDownloadExtensions = [
     "gif",
     "webm",
 ];
-
-struct DownloadFile {
-    string url;
-    string destinationPath;
-}
-
-interface IDownloadProgressTracker {
-    void started(in DownloadFile[] files);
-    void fileStarted(in DownloadFile file);
-    void fileProgress(in size_t current, in size_t total);
-    void fileCompleted(in DownloadFile file);
-    void completed();
-}
 
 string defaultMapURL(in string url) {
     import std.path : dirSeparator;
@@ -68,8 +56,6 @@ class ThreadDownloader {
         return this._downloadExtensions;
     }
 
-    IDownloadProgressTracker downloadProgressTracker;
-
     // Customizable functions
     string delegate(in string url) mapURL;
 
@@ -78,13 +64,14 @@ class ThreadDownloader {
     NotChangedCallback notChanged;
     LinkDownloadFailedCallback linkDownloadFailed;
 
+    IDownloadManager downloadManager;
+
     this(IThreadParser parser, in string url, in string path) {
         import std.functional;
 
+        _parser = parser;
         _url = url;
         _path = path;
-
-        _parser = parser;
 
         mapURL = toDelegate(&defaultMapURL);
     }
@@ -103,9 +90,7 @@ class ThreadDownloader {
     void download() {
         const(char)[] html;
 
-        downloadProgressTracker.started([DownloadFile(url, "")]);
-        auto success = downloadThread(html, (c, t) => downloadProgressTracker.fileProgress(c, t));
-        downloadProgressTracker.completed();
+        auto success = downloadThread(html);
 
         if (!success) {
             if (notChanged !is null) {
@@ -118,15 +103,18 @@ class ThreadDownloader {
         processHTML(html);
     }
 
-    protected bool downloadThread(out const(char)[] html, void delegate(in size_t current, in size_t total) onProgress) {
+    protected bool downloadThread(out const(char)[] html) {
         auto downloader = new FileDownloader(url);
-        downloader.onProgress = (c, t) => onProgress(c, t);
 
         // TODO: Fix already UTF-8 encoded pages getting incorrectly UTF8-decoded, potentially resulting in corrupted characters
         auto result = downloader.get(html);
 
-        if (result.status.code != 200) {
+        if (result.status.code == 304) {
+            // No update found
             return false;
+        }
+        else if (result.code != 200) {
+            throw new Exception("Error downloading thread: " ~ text(result.code, " ", result.reason));
         }
 
         return true;
@@ -178,7 +166,7 @@ class ThreadDownloader {
         auto pBaseURL = this._url.parseURL();
 
         string[] knownUrls;
-        DownloadFile[] downloadLinks;
+        DownloadFile[] filesToDownload;
         foreach(link; links) {
             auto absoluteUrl = (pBaseURL ~ link.url).toString();
 
@@ -207,33 +195,9 @@ class ThreadDownloader {
                 continue;
 
             // Add to list of links to download
-            downloadLinks ~= DownloadFile(absoluteUrl, destinationPath);
+            filesToDownload ~= DownloadFile(absoluteUrl, destinationPath);
         }
 
-        downloadProgressTracker.started(downloadLinks);
-        scope(exit) downloadProgressTracker.completed();
-
-        foreach(dl; downloadLinks) {
-            // Update progress step
-            downloadProgressTracker.fileStarted(dl);
-
-            try {
-                // Download file
-                auto downloader = new FileDownloader(dl.url);
-                downloader.onProgress = (c, t) => downloadProgressTracker.fileProgress(c, t);
-
-                downloader.download(dl.destinationPath);
-
-                downloadProgressTracker.fileCompleted(dl);
-            }
-            catch(Exception ex) {
-                import std.format;
-
-                if (this.linkDownloadFailed !is null)
-                    this.linkDownloadFailed(dl.url, ex.msg);
-
-                continue;
-            }
-        }
+        downloadManager.downloadFiles(filesToDownload);
     }
 }

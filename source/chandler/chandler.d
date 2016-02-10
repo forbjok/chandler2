@@ -6,6 +6,7 @@ import std.path : buildPath;
 import std.regex : matchFirst, regex;
 import std.stdio;
 
+import chandl.components.downloadmanager;
 import chandler.project;
 
 version (Posix) {
@@ -28,11 +29,17 @@ struct ChandlerConfig {
 }
 
 class Chandler {
+    private {
+        IDownloadManager _downloadManager;
+    }
+
     ChandlerConfig config;
     IDownloadProgressTracker downloadProgressTracker;
 
-    this() {
-        config = ChandlerConfig();
+    this(IDownloadProgressTracker downloadProgressTracker) {
+        auto downloadManager = new DownloadManager();
+        downloadManager.downloadProgressTracker = downloadProgressTracker;
+        _downloadManager = downloadManager;
 
         with (config) {
             downloadPath = buildPath(getDocumentsDirectory(), "threads");
@@ -103,7 +110,7 @@ class Chandler {
             project = createProjectFromURL(source, site);
         }
 
-        project.downloadProgressTracker = downloadProgressTracker;
+        project.downloadManager = _downloadManager;
         return project;
     }
 

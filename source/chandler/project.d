@@ -44,7 +44,7 @@ class ChandlerProject : ThreadDownloader {
         this._threadConfigPath = buildPath(this._projectDir, ThreadConfigName);
     }
 
-    override bool downloadThread(out const(char)[] html, void delegate(in size_t current, in size_t total) onProgress) {
+    override bool downloadThread(out const(char)[] html) {
         import chandl.utils.download : FileDownloader;
 
         auto now = Clock.currTime(UTC());
@@ -54,11 +54,11 @@ class ChandlerProject : ThreadDownloader {
         mkdirRecurse(_originalsPath);
 
         auto downloader = new FileDownloader(url);
-        downloader.onProgress = (c, t) => onProgress(c, t);
         downloader.setIfModifiedSince(_lastModified);
 
         auto result = downloader.download(filename);
         if (result.code == 304) {
+            // No update found
             return false;
         }
         else if (result.code != 200) {
