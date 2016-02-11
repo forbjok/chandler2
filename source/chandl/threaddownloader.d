@@ -51,6 +51,11 @@ class ThreadDownloader {
         bool _isDead = false;
     }
 
+    protected {
+        DownloadFile[] filesToDownload;
+        DownloadFile[] failedFiles;
+    }
+
     @property string url() {
         return _url;
     }
@@ -111,6 +116,11 @@ class ThreadDownloader {
             return;
         }
 
+        /* When this scope exits successfully, fire downloadFiles().
+           This is so that previously failed files will be re-tried even
+           if there are no changes to the HTML since the last download. */
+        scope(success) downloadFiles();
+
         if (!success) {
             if (notChanged !is null) {
                 notChanged();
@@ -140,6 +150,34 @@ class ThreadDownloader {
         }
 
         return true;
+    }
+
+    protected void downloadFiles() {
+        import std.array : array;
+        import std.range : chain;
+
+        // Get all failed files and files awaiting download
+        auto files = chain(failedFiles, filesToDownload).array();
+
+        // Clear out file lists
+        filesToDownload.length = 0;
+        failedFiles.length = 0;
+
+        if (files.length == 0) {
+            // If there are no files, there is no need to do anything.
+            return;
+        }
+
+        try {
+            auto result = downloadManager.downloadFiles(files);
+
+            failedFiles ~= result.failed;
+        }
+        catch (Exception ex) {
+            // If download process bombs, add all files to the failed list
+            failedFiles ~= files;
+            throw ex;
+        }
     }
 
     protected void processHTML(in const(char)[] html) {
@@ -188,7 +226,6 @@ class ThreadDownloader {
         auto pBaseURL = this._url.parseURL();
 
         string[] knownUrls;
-        DownloadFile[] filesToDownload;
         foreach(link; links) {
             auto absoluteUrl = (pBaseURL ~ link.url).toString();
 
@@ -219,7 +256,5 @@ class ThreadDownloader {
             // Add to list of links to download
             filesToDownload ~= DownloadFile(absoluteUrl, destinationPath);
         }
-
-        downloadManager.downloadFiles(filesToDownload);
     }
 }

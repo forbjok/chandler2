@@ -14,7 +14,7 @@ struct HTTPStatus {
     string reason;
 }
 
-struct DownloadResult {
+struct FileDownloadResult {
     HTTPStatus status;
     alias status this;
 
@@ -42,7 +42,7 @@ class FileDownloader {
         _ifModifiedSince = timestamp;
     }
 
-    DownloadResult download(in string destinationPath) {
+    FileDownloadResult download(in string destinationPath) {
         import chandl.utils.rfc822datetime : toRFC822DateTime;
 
         // Ensure that destination directory exists
@@ -74,10 +74,10 @@ class FileDownloader {
         // Download file
         std.net.curl.download(_url, destinationPath, http);
 
-        return DownloadResult(HTTPStatus(http.statusLine.code, http.statusLine.reason), http.getLastModified());
+        return FileDownloadResult(HTTPStatus(http.statusLine.code, http.statusLine.reason), http.getLastModified());
     }
 
-    DownloadResult get(out const(char)[] buffer) {
+    FileDownloadResult get(out const(char)[] buffer) {
         import chandl.utils.rfc822datetime : toRFC822DateTime;
 
         auto http = HTTP();
@@ -94,7 +94,7 @@ class FileDownloader {
         }
 
         buffer = std.net.curl.get(_url, http);
-        return DownloadResult(HTTPStatus(http.statusLine.code, http.statusLine.reason), http.getLastModified());
+        return FileDownloadResult(HTTPStatus(http.statusLine.code, http.statusLine.reason), http.getLastModified());
     }
 }
 

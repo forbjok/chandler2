@@ -172,11 +172,14 @@ class ChandlerProject : ThreadDownloader {
 
             try {
                 auto html = readHTML(filename);
-                this.processHTML(html);
+                processHTML(html);
             }
             catch(ThreadParseException ex) {
                 writeln(ex.msg);
             }
         }
+
+        // Attempt to re-download any missing files
+        downloadFiles();
     }
 }

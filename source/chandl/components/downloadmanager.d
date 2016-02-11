@@ -1,5 +1,6 @@
 module chandl.components.downloadmanager;
 
+import std.conv : text;
 import std.file : remove;
 import std.path : exists;
 import std.range : chain;
@@ -11,8 +12,14 @@ struct DownloadFile {
     string destinationPath;
 }
 
+struct DownloadResult {
+    DownloadFile[] downloaded;
+    DownloadFile[] failed;
+    DownloadFile[] notFound;
+}
+
 interface IDownloadManager {
-    void downloadFiles(in DownloadFile[] files);
+    DownloadResult downloadFiles(in DownloadFile[] files);
 }
 
 interface IDownloadProgressTracker {
@@ -31,9 +38,11 @@ class DownloadManager : IDownloadManager {
 
     IDownloadProgressTracker downloadProgressTracker;
 
-    void downloadFiles(in DownloadFile[] files) {
+    DownloadResult downloadFiles(in DownloadFile[] files) {
         downloadProgressTracker.started(files);
         scope(exit) downloadProgressTracker.completed();
+
+        auto result = DownloadResult();
 
         auto retryFiles = _retryFiles;
         _retryFiles.length = 0;
@@ -47,28 +56,33 @@ class DownloadManager : IDownloadManager {
                 auto downloader = new FileDownloader(file.url);
                 downloader.onProgress = (c, t) => downloadProgressTracker.fileProgress(c, t);
 
-                auto result = downloader.download(file.destinationPath);
-                if (result.status.code != 200) {
+                auto fileResult = downloader.download(file.destinationPath);
+                if (fileResult.status.code != 200) {
                     if (file.destinationPath.exists()) {
                         std.file.remove(file.destinationPath);
                     }
 
-                    downloadProgressTracker.fileFailed(file, result.status.reason);
+                    downloadProgressTracker.fileFailed(file, fileResult.status.reason);
 
-                    if (result.status.code != 404) {
-                        // If the status code is not 404 (file not found), retry file later
-                        _retryFiles ~= file;
+                    if (fileResult.status.code == 404) {
+                        result.notFound ~= file;
+                        continue;
                     }
 
-                    continue;
+                    throw new Exception(text(fileResult.status.code, " ", fileResult.status.reason));
                 }
 
+                result.downloaded ~= file;
                 downloadProgressTracker.fileCompleted(file);
             }
             catch(Exception ex) {
+                // If an exception is thrown, add file to failed list
+                result.failed ~= file;
                 downloadProgressTracker.fileFailed(file, ex.msg);
                 continue;
             }
         }
+
+        return result;
     }
 }
