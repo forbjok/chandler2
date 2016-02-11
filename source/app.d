@@ -98,43 +98,46 @@ int main(string[] args)
     }
 
     /* If any valid threads were specified to be watched, watch them. */
-    if (watchProjects.length > 0) {
-        import core.thread;
+    while(watchProjects.length > 0) {
+        auto projects = watchProjects;
+        watchProjects.length = 0;
 
-        while(true) {
-            auto projects = watchProjects;
-            watchProjects.length = 0;
+        foreach(project; projects) {
+            writeln("Downloading thread ", project.url, " to ", project.path);
 
-            foreach(project; projects) {
-                writeln("Downloading thread ", project.url, " to ", project.path);
-
-                try {
-                    // Download thread
-                    project.download();
-                }
-                catch(Exception ex) {
-                    writeln("Failed to download thread: ", project.url, ": ", ex.msg);
-                }
-
-                if (!project.isDead) {
-                    // If the thread is still alive, keep watching it
-                    watchProjects ~= project;
-                }
-                else {
-                    writeln("R.I.P. ", project.url);
-                }
+            try {
+                // Download thread
+                project.download();
+            }
+            catch(Exception ex) {
+                writeln("Failed to download thread: ", project.url, ": ", ex.msg);
             }
 
-            // Do countdown
-            auto status = status();
-            scope(exit) status.clear();
-
-            status.write("Updating in ");
-
-            for(int i = interval; i > 0; --i) {
-                status.report(i, "...");
-                Thread.getThis().sleep(dur!("seconds")(1));
+            if (!project.isDead) {
+                // If the thread is still alive, keep watching it
+                watchProjects ~= project;
             }
+            else {
+                writeln("R.I.P. ", project.url);
+            }
+        }
+
+        // If there are no more threads left to watch, break out of the loop
+        if (watchProjects.length == 0) {
+            break;
+        }
+
+        // Do countdown
+        auto status = status();
+        scope(exit) status.clear();
+
+        status.write("Updating in ");
+
+        for(int i = interval; i > 0; --i) {
+            import core.thread;
+
+            status.report(i, "...");
+            Thread.getThis().sleep(dur!("seconds")(1));
         }
     }
 
