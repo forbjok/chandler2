@@ -108,8 +108,13 @@ int main(string[] args)
             foreach(project; projects) {
                 writeln("Downloading thread ", project.url, " to ", project.path);
 
-                // Download thread
-                project.download();
+                try {
+                    // Download thread
+                    project.download();
+                }
+                catch(Exception ex) {
+                    writeln("Failed to download thread: ", project.url, ": ", ex.msg);
+                }
 
                 if (!project.isDead) {
                     // If the thread is still alive, keep watching it
