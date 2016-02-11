@@ -140,8 +140,13 @@ class Chandler {
 
         auto savePath = buildPath([config.downloadPath] ~ m.array()[1..$]);
 
-        auto project = ChandlerProject.create(site.parser, savePath, url);
-        return project;
+        if (savePath.exists()) {
+            // If path already exists, load the existing project
+            return ChandlerProject.load(savePath);
+        }
+
+        // Create a new project
+        return ChandlerProject.create(site.parser, savePath, url);
     }
 }
 

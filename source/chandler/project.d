@@ -1,17 +1,25 @@
 module chandler.project;
 
+import std.algorithm.iteration : filter, map;
+import std.algorithm.sorting : sort;
+import std.array : array;
 import std.conv : text, to;
 import std.datetime : Clock, SysTime, UTC;
 import std.file;
 import std.format;
-import std.path;
+import std.path : absolutePath, baseName, buildPath, exists;
 
+import jsonserialized;
+import stdx.data.json;
+
+import chandl.components.downloadmanager;
 import chandl.utils.htmlutils;
 
 public import chandl.threaddownloader;
 
 enum ProjectDirName = ".chandler";
-enum ThreadConfigName = "thread.json";
+enum ThreadConfigFileName = "thread.json";
+enum StateFileName = "state.json";
 enum OriginalsDirName = "originals";
 
 struct ThreadConfig {
@@ -20,11 +28,20 @@ struct ThreadConfig {
     string[] downloadExtensions;
 }
 
+struct ProjectState {
+    struct LinkState {
+        string[] failed;
+    }
+
+    LinkState links;
+}
+
 class ChandlerProject : ThreadDownloader {
     private {
         string _projectDir;
         string _originalsPath;
         string _threadConfigPath;
+        string _statePath;
 
         string _parserName;
 
@@ -39,9 +56,10 @@ class ChandlerProject : ThreadDownloader {
 
         super(parser, url, path);
 
-        this._projectDir = projectDir.to!string;
-        this._originalsPath = buildPath(this._projectDir, OriginalsDirName);
-        this._threadConfigPath = buildPath(this._projectDir, ThreadConfigName);
+        _projectDir = projectDir.to!string;
+        _originalsPath = buildPath(_projectDir, OriginalsDirName);
+        _threadConfigPath = buildPath(_projectDir, ThreadConfigFileName);
+        _statePath = buildPath(_projectDir, StateFileName);
     }
 
     override bool downloadThread(out const(char)[] html) {
@@ -74,6 +92,11 @@ class ChandlerProject : ThreadDownloader {
         return true;
     }
 
+    override void downloadFiles() {
+        super.downloadFiles();
+        saveState();
+    }
+
     /* Create a new project in path, for the given url */
     static ChandlerProject create(in string parserName, in string path, in string url) {
         // Get absolute path
@@ -88,9 +111,6 @@ class ChandlerProject : ThreadDownloader {
 
     /* Load project from a path */
     static ChandlerProject load(in string path) {
-        import jsonserialized;
-        import stdx.data.json;
-
         // Get absolute path
         auto absolutePath = text(path).absolutePath();
 
@@ -100,7 +120,7 @@ class ChandlerProject : ThreadDownloader {
         if (!projectDir.exists())
             throw new Exception("Chandler project not found in: " ~ absolutePath.to!string);
 
-        auto threadJsonPath = buildPath(projectDir, ThreadConfigName);
+        auto threadJsonPath = buildPath(projectDir, ThreadConfigFileName);
 
         // Read JSON configuration file
         auto threadJson = readText(threadJsonPath);
@@ -115,14 +135,14 @@ class ChandlerProject : ThreadDownloader {
             project.includeExtension(ext);
         }
 
+        // Load state
+        project.loadState();
+
         return project;
     }
 
     /* Save project configuration */
     void save() {
-        import jsonserialized;
-        import stdx.data.json;
-
         ThreadConfig threadConfig;
         with (threadConfig) {
             parser = _parserName;
@@ -131,30 +151,31 @@ class ChandlerProject : ThreadDownloader {
         }
 
         // If project dir does not exist, create it
-        if (!this._projectDir.exists())
-            mkdirRecurse(this._projectDir);
+        if (!_projectDir.exists())
+            mkdirRecurse(_projectDir);
 
         // Serialize configuration to JSON
         auto jsonConfig = threadConfig.serializeToJSONValue();
 
         // Write thread JSON to file
-        write(this._threadConfigPath, cast(void[])jsonConfig.toJSON());
+        write(_threadConfigPath, cast(void[])jsonConfig.toJSON());
     }
 
     /* Rebuild thread from original HTMLs */
     void rebuild() {
-        import std.algorithm.iteration : filter, map;
-        import std.algorithm.sorting : sort;
-        import std.array : array;
-        import std.file : exists;
         import std.stdio : writeln;
         import std.string : endsWith;
 
         import chandl.threadparser : ThreadParseException;
 
-        auto threadHTMLPath = buildPath(path, "thread.html");
+        // If thread HTML exists, delete it
         if (threadHTMLPath.exists()) {
             std.file.remove(threadHTMLPath);
+        }
+
+        // If state file exists, delete it
+        if (_statePath.exists()) {
+            std.file.remove(_statePath);
         }
 
         /* Fetch a list of all original htmls sorted by name
@@ -181,5 +202,38 @@ class ChandlerProject : ThreadDownloader {
 
         // Attempt to re-download any missing files
         downloadFiles();
+        writeln("Rebuild complete.");
+    }
+
+    private void saveState() {
+        // Get current state
+        ProjectState state;
+        state.links.failed = failedFiles.map!(f => f.url).array();
+
+        // Serialize state to JSON
+        auto jvState = state.serializeToJSONValue();
+
+        // Write state to file
+        write(_statePath, cast(void[])jvState.toJSON());
+    }
+
+    private void loadState() {
+        if (!_statePath.exists()) {
+            // If there is no state file, return immediately
+            return;
+        }
+
+        // Read state file
+        auto stateJson = readText(_statePath);
+        auto jvState = stateJson.toJSONValue();
+
+        // Deserialize state
+        ProjectState state;
+        state.deserializeFromJSONValue(jvState);
+
+        // Restore state
+        failedFiles = state.links.failed
+            .map!(url => DownloadFile(url, buildPath(path, mapURL(url))))
+            .array();
     }
 }

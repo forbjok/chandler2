@@ -46,6 +46,7 @@ class ThreadDownloader {
     private {
         string _url;
         string _path;
+        string _threadHTMLPath;
         IThreadParser _parser;
         string[] _downloadExtensions = defaultDownloadExtensions;
         bool _isDead = false;
@@ -62,6 +63,10 @@ class ThreadDownloader {
 
     @property string path() {
         return _path;
+    }
+
+    @property string threadHTMLPath() {
+        return _threadHTMLPath;
     }
 
     @property string[] downloadExtensions() {
@@ -88,6 +93,7 @@ class ThreadDownloader {
         _parser = parser;
         _url = url;
         _path = path;
+        _threadHTMLPath = buildPath(_path, "thread.html");
 
         mapURL = toDelegate(&defaultMapURL);
     }
@@ -184,14 +190,13 @@ class ThreadDownloader {
         import std.file;
         import std.path;
 
-        auto outputHTMLPath = buildPath(this._path, "thread.html");
         const(char)[] outputHTML;
 
-        if (_parser.supportsUpdate && outputHTMLPath.exists()) {
+        if (_parser.supportsUpdate && _threadHTMLPath.exists()) {
             /* If the parser supports updating (merging) threads
                and the output file already exists, update the existing
                file with new posts from the HTML. */
-            auto baseHTML = readHTML(outputHTMLPath);
+            auto baseHTML = readHTML(_threadHTMLPath);
             auto baseThread = this._parser.parseThread(baseHTML);
 
             auto updateResult = baseThread.update(html);
@@ -217,13 +222,13 @@ class ThreadDownloader {
         }
 
         // Write resulting HTML to output file
-        std.file.write(outputHTMLPath, outputHTML);
+        std.file.write(_threadHTMLPath, outputHTML);
     }
 
     private void processLinks(ILink[] links) {
         import std.file;
 
-        auto pBaseURL = this._url.parseURL();
+        auto pBaseURL = _url.parseURL();
 
         string[] knownUrls;
         foreach(link; links) {
@@ -235,14 +240,22 @@ class ThreadDownloader {
                 continue;
             }
 
-            if (!absoluteUrl.linkHasExtension(this._downloadExtensions))
+            if (!absoluteUrl.linkHasExtension(_downloadExtensions))
                 continue;
 
-            auto path = this.mapURL(absoluteUrl);
-            auto destinationPath = buildPath(this._path, path);
+            string localPath;
+            try {
+                localPath = mapURL(absoluteUrl);
+            }
+            catch (Exception) {
+                // Not a valid URL - ignore it
+                continue;
+            }
+
+            auto fullLocalPath = buildPath(_path, localPath);
 
             // Update link to local relative path
-            link.url = path.to!string;
+            link.url = localPath.to!string;
 
             if (knownUrls.canFind(absoluteUrl))
                 continue;
@@ -250,11 +263,11 @@ class ThreadDownloader {
             knownUrls ~= absoluteUrl;
 
             // If destination file already exists, there is no need to download it
-            if (destinationPath.exists())
+            if (fullLocalPath.exists())
                 continue;
 
-            // Add to list of links to download
-            filesToDownload ~= DownloadFile(absoluteUrl, destinationPath);
+            // Add links to list of files to download
+            filesToDownload ~= DownloadFile(absoluteUrl, fullLocalPath);
         }
     }
 }
