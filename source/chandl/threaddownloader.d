@@ -22,6 +22,12 @@ enum defaultDownloadExtensions = [
     "webm",
 ];
 
+class ThreadNotFoundException : Exception {
+    this(in string url) {
+        super("Thread not found: " ~ url);
+    }
+}
+
 string defaultMapURL(in string url) {
     import std.path : dirSeparator;
     import std.string;
@@ -42,18 +48,23 @@ class ThreadDownloader {
         string _path;
         IThreadParser _parser;
         string[] _downloadExtensions = defaultDownloadExtensions;
+        bool _isDead = false;
     }
 
     @property string url() {
-        return this._url;
+        return _url;
     }
 
     @property string path() {
-        return this._path;
+        return _path;
     }
 
     @property string[] downloadExtensions() {
-        return this._downloadExtensions;
+        return _downloadExtensions;
+    }
+
+    @property bool isDead() {
+        return _isDead;
     }
 
     // Customizable functions
@@ -90,7 +101,15 @@ class ThreadDownloader {
     void download() {
         const(char)[] html;
 
-        auto success = downloadThread(html);
+        bool success;
+        try {
+            success = downloadThread(html);
+        }
+        catch (ThreadNotFoundException) {
+            // If the thread was not found, it must have 404'd - mark it as dead
+            _isDead = true;
+            return;
+        }
 
         if (!success) {
             if (notChanged !is null) {
@@ -112,6 +131,9 @@ class ThreadDownloader {
         if (result.status.code == 304) {
             // No update found
             return false;
+        }
+        else if (result.code == 404) {
+            throw new ThreadNotFoundException(url);
         }
         else if (result.code != 200) {
             throw new Exception("Error downloading thread: " ~ text(result.code, " ", result.reason));

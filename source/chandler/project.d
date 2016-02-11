@@ -61,6 +61,9 @@ class ChandlerProject : ThreadDownloader {
             // No update found
             return false;
         }
+        else if (result.code == 404) {
+            throw new ThreadNotFoundException(url);
+        }
         else if (result.code != 200) {
             throw new Exception("Error downloading thread: " ~ text(result.code, " ", result.reason));
         }

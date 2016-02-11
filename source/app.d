@@ -102,11 +102,22 @@ int main(string[] args)
         import core.thread;
 
         while(true) {
-            foreach(project; watchProjects) {
+            auto projects = watchProjects;
+            watchProjects.length = 0;
+
+            foreach(project; projects) {
                 writeln("Downloading thread ", project.url, " to ", project.path);
 
                 // Download thread
                 project.download();
+
+                if (!project.isDead) {
+                    // If the thread is still alive, keep watching it
+                    watchProjects ~= project;
+                }
+                else {
+                    writeln("R.I.P. ", project.url);
+                }
             }
 
             // Do countdown
