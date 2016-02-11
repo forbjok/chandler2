@@ -1,8 +1,8 @@
 {
-  "name": "chandlerd",
-  "description": "A minimal D application.",
-  "copyright": "Copyright © 2016, forbj",
-  "authors": ["forbj"],
+  "name": "chandler",
+  "description": "A thread downloader for imageboards.",
+  "copyright": "Copyright © 2016, Kjartan F. Kvamme",
+  "authors": ["Kjartan F. Kvamme"],
   "dependencies": {
     "reurl": "*",
     "jsonserialized": "*",
