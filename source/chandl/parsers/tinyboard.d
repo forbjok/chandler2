@@ -57,7 +57,7 @@ class TinyboardThread : MergingThread {
         return posts;
     }
 
-    override Node* getPost(in int id) {
+    override Node* getPost(in ulong id) {
         import std.format;
 
         if (id == 0) {
@@ -70,7 +70,7 @@ class TinyboardThread : MergingThread {
         return postNode;
     }
 
-    override int getPostId(in Node* postElement) {
+    override ulong getPostId(in Node* postElement) {
         import std.regex;
 
         auto re = regex(`reply_(\d+)`);

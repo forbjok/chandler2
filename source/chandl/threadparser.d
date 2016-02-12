@@ -20,7 +20,7 @@ interface IThreadParser {
 }
 
 struct UpdateResult {
-    int[] newPosts;
+    ulong[] newPosts;
     ILink[] newLinks;
 }
 

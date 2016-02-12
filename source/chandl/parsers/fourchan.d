@@ -31,7 +31,7 @@ class FourChanThread : MergingThread {
         return posts;
     }
 
-    override Node* getPost(in int id) {
+    override Node* getPost(in ulong id) {
         import std.format;
 
         // Query post container element by ID
@@ -40,7 +40,7 @@ class FourChanThread : MergingThread {
         return postNode;
     }
 
-    override int getPostId(in Node* postElement) {
+    override ulong getPostId(in Node* postElement) {
         import std.regex;
 
         auto re = regex(`pc(\d+)`);

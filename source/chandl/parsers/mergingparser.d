@@ -19,8 +19,8 @@ abstract class MergingThread : IThread {
     }
 
     protected abstract Node*[] getAllPosts();
-    protected abstract Node* getPost(in int id);
-    protected abstract int getPostId(in Node* postElement);
+    protected abstract Node* getPost(in ulong id);
+    protected abstract ulong getPostId(in Node* postElement);
     protected abstract void appendPost(Node* newPostElement);
     protected abstract MergingThread parseThread(in const(char)[] html);
 
