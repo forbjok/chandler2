@@ -1,5 +1,6 @@
 module chandler.project;
 
+import core.time : TimeException;
 import std.algorithm.iteration : filter, map;
 import std.algorithm.sorting : sort;
 import std.array : array;
@@ -33,6 +34,7 @@ struct ProjectState {
         string[] failed;
     }
 
+    string lastModified;
     LinkState links;
 }
 
@@ -208,6 +210,7 @@ class ChandlerProject : ThreadDownloader {
     private void saveState() {
         // Get current state
         ProjectState state;
+        state.lastModified = _lastModified.toISOExtString();
         state.links.failed = failedFiles.map!(f => f.url).array();
 
         // Serialize state to JSON
@@ -232,6 +235,14 @@ class ChandlerProject : ThreadDownloader {
         state.deserializeFromJSONValue(jvState);
 
         // Restore state
+        try {
+            _lastModified = SysTime.fromISOExtString(state.lastModified);
+        }
+        catch (TimeException) {
+            // Presumably the date string in the state file was invalid or blank
+            // We can safely ignore this.
+        }
+
         failedFiles = state.links.failed
             .map!(url => DownloadFile(url, buildPath(path, mapURL(url))))
             .array();
