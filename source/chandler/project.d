@@ -77,15 +77,19 @@ class ChandlerProject : ThreadDownloader {
         downloader.setIfModifiedSince(_lastModified);
 
         auto result = downloader.download(filename);
-        if (result.code == 304) {
-            // No update found
-            return false;
-        }
-        else if (result.code == 404) {
-            throw new ThreadNotFoundException(url);
-        }
-        else if (result.code != 200) {
-            throw new Exception("Error downloading thread: " ~ text(result.code, " ", result.reason));
+        if (result.code != 200) {
+            // If status code was not 200 (success), delete whatever file was produced
+            std.file.remove(filename);
+
+            switch(result.code) {
+            case 304:
+                // No update found
+                return false;
+            case 404:
+                throw new ThreadNotFoundException(url);
+            default:
+                throw new Exception("Error downloading thread: " ~ text(result.code, " ", result.reason));
+            }
         }
 
         _lastModified = result.lastModified;
