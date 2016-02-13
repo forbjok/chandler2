@@ -67,6 +67,10 @@ class ChandlerProject : ThreadDownloader {
         _threadConfigPath = buildPath(_projectDir, ThreadConfigFileName);
         _statePath = buildPath(_projectDir, StateFileName);
 
+        // If project dir does not exist, create it
+        if (!_projectDir.exists())
+            mkdirRecurse(_projectDir);
+
         auto pidFileName = buildPath(_projectDir, PIDFileName);
         _pidLock = new PIDLock(pidFileName);
     }
