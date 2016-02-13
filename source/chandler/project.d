@@ -15,6 +15,7 @@ import stdx.data.json;
 
 import chandl.components.downloadmanager;
 import chandl.utils.htmlutils;
+import chandler.utils.pidlock;
 
 public import chandl.threaddownloader;
 
@@ -22,6 +23,7 @@ enum ProjectDirName = ".chandler";
 enum ThreadConfigFileName = "thread.json";
 enum StateFileName = "state.json";
 enum OriginalsDirName = "originals";
+enum PIDFileName = "chandler.pid";
 
 struct ThreadConfig {
     string parser;
@@ -48,6 +50,8 @@ class ChandlerProject : ThreadDownloader {
         string _parserName;
 
         SysTime _lastModified = SysTime.min();
+
+        PIDLock _pidLock;
     }
 
     private this(in string parserName, in string url, in string path, in string projectDir) {
@@ -62,6 +66,13 @@ class ChandlerProject : ThreadDownloader {
         _originalsPath = buildPath(_projectDir, OriginalsDirName);
         _threadConfigPath = buildPath(_projectDir, ThreadConfigFileName);
         _statePath = buildPath(_projectDir, StateFileName);
+
+        auto pidFileName = buildPath(_projectDir, PIDFileName);
+        _pidLock = new PIDLock(pidFileName);
+    }
+
+    ~this() {
+        destroy(_pidLock);
     }
 
     override bool downloadThread(out const(char)[] html) {

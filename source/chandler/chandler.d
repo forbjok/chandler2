@@ -123,6 +123,9 @@ class Chandler {
 
         // Load project
         auto project = loadSource(source);
+        if (project is null) {
+            writeln("Could not load project from: ", source);
+        }
 
         // Rebuild
         project.rebuild();

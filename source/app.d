@@ -5,6 +5,7 @@ import std.stdio;
 import dstatus.status;
 import chandl.threaddownloader;
 import chandler;
+import chandler.utils.pidlock : PIDLockedException;
 
 import cli.utils.breakhandler;
 import cli.ui.downloadprogresstracker;
@@ -46,7 +47,16 @@ int main(string[] args)
     }
 
     auto loadSource(in string source) {
-        auto project = chandler.loadSource(source);
+        ChandlerProject project;
+
+        try {
+            project = chandler.loadSource(source);
+        }
+        catch (PIDLockedException) {
+            writeln(source, " is already in use by another chandler process. Skipping.");
+            return null;
+        }
+
         if (project is null) {
             return null;
         }
@@ -78,6 +88,9 @@ int main(string[] args)
     /* Download all download-once sources */
     foreach(source; args[1..$]) {
         auto project = loadSource(source);
+        if (project is null) {
+            continue;
+        }
 
         writeln("Downloading thread ", project.url, " to ", project.path);
 
@@ -119,6 +132,7 @@ int main(string[] args)
             }
             else {
                 writeln("R.I.P. ", project.url);
+                destroy(project);
             }
         }
 
