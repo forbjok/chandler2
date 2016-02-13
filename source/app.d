@@ -1,3 +1,4 @@
+import core.thread : dur, Thread;
 import std.getopt : getopt;
 import std.path : absolutePath, baseName;
 import std.stdio;
@@ -77,8 +78,17 @@ int main(string[] args)
         return project;
     }
 
+    bool isTerminating = false;
+
+    import cli.utils.breakhandler;
+    registerBreakHandler({ isTerminating = true; });
+    handleBreak();
+
     /* Rebuild projects if any were specified */
     foreach(projectPath; rebuildProjects) {
+        if (isTerminating)
+            break;
+
         writeln("Rebuilding project at ", projectPath);
 
         // Rebuild project
@@ -87,6 +97,9 @@ int main(string[] args)
 
     /* Download all download-once sources */
     foreach(source; args[1..$]) {
+        if (isTerminating)
+            break;
+
         auto project = loadSource(source);
         if (project is null) {
             continue;
@@ -101,6 +114,9 @@ int main(string[] args)
     /* Try to load any sources specified for watching */
     ChandlerProject[] watchProjects;
     foreach(source; watchThreads) {
+        if (isTerminating)
+            break;
+
         auto project = loadSource(source);
         if (project is null) {
             continue;
@@ -111,7 +127,7 @@ int main(string[] args)
     }
 
     /* If any valid threads were specified to be watched, watch them. */
-    while(watchProjects.length > 0) {
+    while(!isTerminating && watchProjects.length > 0) {
         auto projects = watchProjects;
         watchProjects.length = 0;
 
@@ -148,7 +164,8 @@ int main(string[] args)
         status.write("Updating in ");
 
         for(int i = interval; i > 0; --i) {
-            import core.thread;
+            if (isTerminating)
+                break;
 
             status.report(i, "...");
             Thread.getThis().sleep(dur!("seconds")(1));

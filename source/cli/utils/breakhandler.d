@@ -1,40 +1,33 @@
 module cli.utils.breakhandler;
 
-import std.stdio;
+alias BreakHandler = void delegate();
 
-static bool isTerminating = false;
+private {
+    shared BreakHandler[] breakHandlers;
+
+    void callBreakHandlers() {
+        foreach(handler; breakHandlers) {
+            handler();
+        }
+    }
+}
+
+void registerBreakHandler(BreakHandler handler) {
+    breakHandlers ~= handler;
+}
 
 void handleBreak() {
-    version (Windows) {
-        import core.sys.windows.windef;
-        import core.sys.windows.wincon;
-
-        extern(Windows) static BOOL handler(DWORD d) nothrow {
-            try {
-                writeln("Ctrl-C pressed.");
-            }
-            catch {
-            }
-
-            isTerminating = true;
-            return TRUE;
-        }
-
-        SetConsoleCtrlHandler(cast(PHANDLER_ROUTINE)&handler, TRUE);
-    }
-    else version (Posix) {
+    version (Posix) {
         import core.stdc.signal;
         import core.stdc.stdio;
         import core.sys.posix.signal;
 
         extern (C) static nothrow void handler(int s) {
             try {
-                writeln("Ctrl-C pressed.");
+                callBreakHandlers();
             }
             catch {
             }
-
-            isTerminating = true;
         }
 
         sigaction_t sa;
@@ -44,5 +37,21 @@ void handleBreak() {
         sa.sa_flags = 0;
 
         sigaction(SIGINT, &sa, null);
+    }
+    else version (Windows) {
+        import core.sys.windows.windef;
+        import core.sys.windows.wincon;
+
+        extern(Windows) static BOOL handler(DWORD d) nothrow {
+            try {
+                callBreakHandlers();
+            }
+            catch {
+            }
+
+            return TRUE;
+        }
+
+        SetConsoleCtrlHandler(cast(PHANDLER_ROUTINE)&handler, TRUE);
     }
 }
