@@ -21,6 +21,7 @@ struct FileDownloadResult {
     SysTime lastModified;
 }
 
+alias CancellationCallback = bool delegate();
 alias DownloadProgressCallback = void delegate(in size_t current, in size_t total);
 
 class FileDownloader {
@@ -31,6 +32,7 @@ class FileDownloader {
         SysTime _ifModifiedSince;
     }
 
+    CancellationCallback cancellationCallback;
     DownloadProgressCallback onProgress;
 
     this(in string url) {
@@ -61,7 +63,7 @@ class FileDownloader {
         if (onProgress !is null) {
             http.onProgress = (dlTotal, dlNow, ulTotal, ulNow) {
                 onProgress(dlNow, dlTotal);
-                return 0;
+                return cancellationCallback() ? 1 : 0;
             };
         }
 

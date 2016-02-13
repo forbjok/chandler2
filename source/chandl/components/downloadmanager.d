@@ -7,6 +7,8 @@ import std.range : chain;
 
 import chandl.utils.download;
 
+alias CancellationCallback = bool delegate();
+
 struct DownloadFile {
     string url;
     string destinationPath;
@@ -36,6 +38,7 @@ class DownloadManager : IDownloadManager {
         DownloadFile[] _retryFiles;
     }
 
+    CancellationCallback cancellationCallback;
     IDownloadProgressTracker downloadProgressTracker;
 
     DownloadResult downloadFiles(in DownloadFile[] files) {
@@ -48,12 +51,19 @@ class DownloadManager : IDownloadManager {
         _retryFiles.length = 0;
 
         foreach(file; chain(retryFiles, files)) {
+            if (cancellationCallback()) {
+                // If the download was cancelled, add all remaining files to failed
+                result.failed ~= file;
+                continue;
+            }
+
             // Update progress step
             downloadProgressTracker.fileStarted(file);
 
             try {
                 // Download file
                 auto downloader = new FileDownloader(file.url);
+                downloader.cancellationCallback = cancellationCallback;
                 downloader.onProgress = (c, t) => downloadProgressTracker.fileProgress(c, t);
 
                 auto fileResult = downloader.download(file.destinationPath);

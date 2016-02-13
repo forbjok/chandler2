@@ -39,8 +39,14 @@ int main(string[] args)
         return 1;
     }
 
+    bool isTerminating = false;
+
+    import cli.utils.breakhandler;
+    registerBreakHandler({ isTerminating = true; });
+    handleBreak();
+
     auto downloadProgressTracker = new DownloadProgressTracker();
-    auto chandler = new Chandler(downloadProgressTracker);
+    auto chandler = new Chandler(downloadProgressTracker, () => isTerminating);
     chandler.readConfig();
 
     if (destination.length > 0) {
@@ -77,12 +83,6 @@ int main(string[] args)
         project.save();
         return project;
     }
-
-    bool isTerminating = false;
-
-    import cli.utils.breakhandler;
-    registerBreakHandler({ isTerminating = true; });
-    handleBreak();
 
     /* Rebuild projects if any were specified */
     foreach(projectPath; rebuildProjects) {

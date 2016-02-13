@@ -34,10 +34,12 @@ class Chandler {
     }
 
     ChandlerConfig config;
+
     IDownloadProgressTracker downloadProgressTracker;
 
-    this(IDownloadProgressTracker downloadProgressTracker) {
+    this(IDownloadProgressTracker downloadProgressTracker, CancellationCallback cancellationCallback) {
         auto downloadManager = new DownloadManager();
+        downloadManager.cancellationCallback = cancellationCallback;
         downloadManager.downloadProgressTracker = downloadProgressTracker;
         _downloadManager = downloadManager;
 
