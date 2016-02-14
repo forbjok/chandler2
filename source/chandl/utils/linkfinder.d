@@ -2,7 +2,7 @@ module chandl.utils.linkfinder;
 
 import std.algorithm;
 import std.array;
-import std.conv;
+import std.conv : to;
 
 import html;
 
@@ -24,26 +24,31 @@ enum LinkTags = [
 private class Link : ILink {
     private Node* _node;
     private string _attr;
+    private string _originalValue;
 
     this(Node* node, in string attr) {
-        this._node = node;
-        this._attr = attr;
+        _node = node;
+        _attr = attr;
+        _originalValue = _node.attr(_attr).to!string;
     }
 
     @property string tag() {
-        return this._node.tag.to!string;
+        return _node.tag.to!string;
     }
 
     @property string attr() {
-        return this._attr;
+        return _attr;
     }
 
     @property string url() {
-        return this._node.attr(this._attr).to!string;
+        return _node.attr(_attr).to!string;
     }
 
     @property string url(in string value) {
-        this._node.attr(this._attr, value);
+        // Store original value
+        _node.attr("data-original-" ~ _attr, _originalValue);
+
+        _node.attr(_attr, value);
         return value;
     }
 }
