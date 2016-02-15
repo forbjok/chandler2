@@ -17,6 +17,7 @@ class DownloadProgressTracker : IDownloadProgressTracker {
     }
 
     void fileStarted(in DownloadFile file) {
+        _downloadProgress.anchor();
         _downloadProgress.step(file.url);
         _downloadProgress.progress(0);
     }
