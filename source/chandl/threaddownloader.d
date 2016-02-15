@@ -3,7 +3,8 @@ module chandl.threaddownloader;
 import std.algorithm.searching;
 import std.conv : text, to;
 import std.datetime : SysTime;
-import std.path : buildPath;
+import std.path : buildPath, dirSeparator;
+import std.string : replace;
 
 import reurl;
 
@@ -29,9 +30,6 @@ class ThreadNotFoundException : Exception {
 }
 
 string defaultMapURL(in string url) {
-    import std.path : dirSeparator;
-    import std.string;
-
     auto purl = url.parseURL();
     auto path = purl.hostname ~ purl.path.replace("/", dirSeparator);
 
@@ -254,8 +252,8 @@ class ThreadDownloader {
 
             auto fullLocalPath = buildPath(_path, localPath);
 
-            // Update link to local relative path
-            link.url = localPath.to!string;
+            // Update link to local relative path, replacing dir separators with forward slashes
+            link.url = localPath.replace(dirSeparator, "/");
 
             if (knownUrls.canFind(absoluteUrl))
                 continue;
