@@ -1,6 +1,6 @@
 import core.thread : dur, Thread;
 import std.getopt : getopt;
-import std.path : absolutePath, baseName;
+import std.path : absolutePath, baseName, stripExtension;
 import std.stdio;
 
 import dstatus.status;
@@ -36,6 +36,15 @@ int main(string[] args)
     catch(Exception ex) {
         // If there is an error parsing arguments, print it
         writeln(ex.msg);
+        return 1;
+    }
+
+    // If there is nothing to do, display usage information
+    if (args.length <= 1
+        && watchThreads.length == 0
+        && rebuildProjects.length == 0)
+    {
+        writeUsage(args[0]);
         return 1;
     }
 
@@ -176,5 +185,13 @@ int main(string[] args)
 }
 
 void writeUsage(in string executable) {
-    writefln("Usage: %s [-c] [-i INTERVAL] [--help] <url(s)>", executable.baseName());
+    writefln("Usage: %s [options] [sources...]", executable.baseName().stripExtension());
+    writeln();
+    writeln("A source can be either a thread URL or a path to a chandler project. (downloaded thread)");
+    writeln();
+    writeln("Options:");
+    writeln("\t-d|destination\t<path>\t\tSpecify download root directory");
+    writeln("\t-i|interval\t<seconds>\tSpecify update interval for watched threads");
+    writeln("\t-r|rebuild\t<project>\tSpecify a project to rebuild. Can be specified multiple times.");
+    writeln("\t-w|watch\t<source>\tSpecify a source to watch. Can be specified multiple times.");
 }
