@@ -16,7 +16,7 @@ int main(string[] args)
     string destination;
     string[] watchThreads;
     string[] rebuildProjects;
-    int interval = 30;
+    int interval = 60;
 
     try {
         // Parse arguments
