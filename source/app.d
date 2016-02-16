@@ -18,6 +18,9 @@ int main(string[] args)
     string[] rebuildProjects;
     int interval = 60;
 
+    // Always print a newline when the program exits
+    scope(exit) writeln();
+
     try {
         // Parse arguments
         auto getoptResult = getopt(args,
