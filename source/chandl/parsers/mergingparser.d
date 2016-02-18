@@ -59,13 +59,8 @@ abstract class MergingThread : IThread {
             foreach(newPostId; newPostsIds) {
                 auto updatePost = updateThread.getPost(newPostId);
 
-                /* Because there doesn't seem to be a way to create a new element
-                   from existing HTML in htmld, create an empty dummy element and set its
-                   inner HTML to the HTML of the updated post and get the newly
-                   created post element by retrieving its first child element. */
-                auto dummyElement = _document.createElement("div");
-                dummyElement.html = updatePost.outerHTML;
-                auto newPost = dummyElement.firstChild();
+                // Clone the new post into this HTML document
+                auto newPost = _document.clone(updatePost);
 
                 // Append new post to thread
                 appendPost(newPost);
