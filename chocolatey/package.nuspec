@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- Do not remove this test for UTF-8: if “Ω” doesn’t appear as greek uppercase omega letter enclosed in quotation marks, you should use an editor that supports UTF-8, not this one. -->
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <!-- Read this before publishing packages to chocolatey.org: https://github.com/chocolatey/chocolatey/wiki/CreatePackages -->
+    <id>chandler</id>
+    <title>Chandler</title>
+    <version>2.0.0-beta1</version>
+    <authors>Kjartan F. Kvamme</authors>
+    <owners>Kjartan F. Kvamme</owners>
+    <summary>A thread downloader for imageboards such as 4chan.</summary>
+    <description>See a thread you consider worthy of archival?
+Don't trust the 4chan archives to remain available?
+Or perhaps it's not on 4chan, but on some tiny obscure imageboard nobody else has heard of or considered worth archiving?
+
+Chandler to the rescue!
+
+Chandler is a commandline-utility for quickly and easily downloading threads from imageboards, as well as a fire and forget solution for watching threads indefinitely and downloading new posts as they become available.
+For sites where this is supported (currently 4chan and Tinyboard-compatible sites), posts from previous threads which are later deleted will be preserved when updating threads.
+    </description>
+    <projectUrl>https://github.com/forbjok/chandler2</projectUrl>
+    <packageSourceUrl>https://github.com/forbjok/chandler2</packageSourceUrl>
+    <projectSourceUrl>https://github.com/forbjok/chandler2</projectSourceUrl>
+    <docsUrl>https://github.com/forbjok/chandler2</docsUrl>
+    <bugTrackerUrl>https://github.com/forbjok/chandler2/issues</bugTrackerUrl>
+    <tags>chandler2 imageboard thread downloader 4chan tinyboard</tags>
+    <licenseUrl>https://github.com/forbjok/chandler2/blob/master/LICENSE.md</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+  </metadata>
+  <files>
+    <file src="..\chandler.exe" target="tools" />
+  </files>
+</package>
