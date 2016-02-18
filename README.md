@@ -1,5 +1,4 @@
-# Chandler 2
-[![Build Status](https://travis-ci.org/forbjok/chandler2.svg?branch=master)](https://travis-ci.org/forbjok/chandler2)
+# Chandler 2 [![Build Status](https://travis-ci.org/forbjok/chandler2.svg?branch=master)](https://travis-ci.org/forbjok/chandler2)
 
 ## Introduction
 See a thread you consider worthy of archival?
@@ -14,13 +13,17 @@ For sites where this is supported (currently 4chan and Tinyboard-compatible site
 
 Supported platforms are **GNU/Linux** (tested on Arch Linux, but should work others as well) and **Microsoft Windows**, but it might work on other *nixes as well if it's possible to get DMD and DUB working on them.
 
-## Installing/Compiling
-Currently, there is no Windows installer available for Chandler 2. This will be remedied soon.
+## Installing
+Chandler is now available as a [Chocolatey](https://chocolatey.org/) package for Windows.
+```
+C:\> choco install chandler -pre
+```
 
-Until then, you will have to compile it yourself.
+For GNU/Linux, see **Compiling**.
 
-1. Download and install the lastest version of DMD (the reference D compiler) from [dlang.org](http://dlang.org/)
-2. Download and install DUB from [code.dlang.org](https://code.dlang.org/)
+## Compiling
+1. Download and install the lastest version of DMD (the reference D compiler) from [dlang.org](http://dlang.org/) or your distro's package manager
+2. Download and install DUB from [code.dlang.org](https://code.dlang.org/) or your distro's package manager
 3. Clone this repository and execute the following command in it:
 ```
 $ dub build
