@@ -13,6 +13,7 @@ import cli.ui.downloadprogresstracker;
 
 int main(string[] args)
 {
+    bool versionWanted = false;
     string destination;
     string[] watchThreads;
     string[] rebuildProjects;
@@ -25,6 +26,7 @@ int main(string[] args)
         // Parse arguments
         auto getoptResult = getopt(args,
             std.getopt.config.bundling,
+            "version", &versionWanted,
             "d|destination", &destination,
             "i|interval", &interval,
             "r|rebuild", &rebuildProjects,
@@ -40,6 +42,11 @@ int main(string[] args)
         // If there is an error parsing arguments, print it
         writeln(ex.msg);
         return 1;
+    }
+
+    if (versionWanted) {
+        writefln("Chandler version %s", import("VERSION"));
+        return 0;
     }
 
     // If there is nothing to do, display usage information

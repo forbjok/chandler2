@@ -10,5 +10,6 @@
     "htmld": "~>0.2.13",
     "std_data_json": "~>0.17.0",
     "dunit": "~>1.0.12"
-  }
+  },
+  "stringImportPaths": ["."]
 }
