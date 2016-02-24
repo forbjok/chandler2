@@ -34,6 +34,7 @@ class Chandler {
     }
 
     ChandlerConfig config;
+    string subdirectory;
 
     IDownloadProgressTracker downloadProgressTracker;
 
@@ -143,7 +144,7 @@ class Chandler {
             return null;
         }
 
-        auto savePath = buildPath([config.downloadPath] ~ m.array()[1..$]);
+        auto savePath = buildPath([config.downloadPath, subdirectory] ~ m.array()[1..$]);
 
         if (savePath.exists()) {
             // If path already exists, load the existing project

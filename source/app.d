@@ -15,6 +15,7 @@ int main(string[] args)
 {
     bool versionWanted = false;
     string destination;
+    string subdirectory;
     string[] watchThreads;
     string[] rebuildProjects;
     int interval = 60;
@@ -30,6 +31,7 @@ int main(string[] args)
             "d|destination", &destination,
             "i|interval", &interval,
             "r|rebuild", &rebuildProjects,
+            "s|subdirectory", &subdirectory,
             "w|watch", &watchThreads);
 
         if (getoptResult.helpWanted) {
@@ -67,6 +69,7 @@ int main(string[] args)
     auto downloadProgressTracker = new DownloadProgressTracker();
     auto chandler = new Chandler(downloadProgressTracker, () => isTerminating);
     chandler.readConfig();
+    chandler.subdirectory = subdirectory;
 
     if (destination.length > 0) {
         chandler.config.downloadPath = destination.absolutePath();
@@ -203,5 +206,6 @@ void writeUsage(in string executable) {
     writeln("\t-d|destination\t<path>\t\tSpecify download root directory");
     writeln("\t-i|interval\t<seconds>\tSpecify update interval for watched threads");
     writeln("\t-r|rebuild\t<project>\tSpecify a project to rebuild. Can be specified multiple times.");
+    writeln("\t-s|subdirectory\t<subpath>\tSpecify an additional subpath.");
     writeln("\t-w|watch\t<source>\tSpecify a source to watch. Can be specified multiple times.");
 }
