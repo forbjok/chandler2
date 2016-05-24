@@ -106,7 +106,7 @@ class Chandler {
                     parser = "basic";
 
                     // Use generic regex that matches most common imageboard URL schemes
-                    urlRegex = `https?://([\w\.]+)(?:/(\w+))?(?:/.*)*?(?:/(\d+))`;
+                    urlRegex = `https?://([\w\.\-]+)(?:/([\w\-_]+))?(?:/.*)*?(?:/(\d+))`;
                 }
             }
 

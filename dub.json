@@ -4,7 +4,7 @@
   "copyright": "Copyright © 2016, Kjartan F. Kvamme",
   "authors": ["Kjartan F. Kvamme"],
   "dependencies": {
-    "reurl": "*",
+    "reurl": "~>0.0.2",
     "jsonserialized": "*",
     "dstatus": "*",
     "htmld": "~>0.2.13",
