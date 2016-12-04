@@ -1,5 +1,5 @@
 import core.thread : dur, Thread;
-import std.getopt : getopt;
+static import std.getopt;
 import std.path : absolutePath, baseName, stripExtension;
 import std.stdio;
 
@@ -25,7 +25,7 @@ int main(string[] args)
 
     try {
         // Parse arguments
-        auto getoptResult = getopt(args,
+        auto getoptResult = std.getopt.getopt(args,
             std.getopt.config.bundling,
             "version", &versionWanted,
             "d|destination", &destination,

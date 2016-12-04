@@ -1,6 +1,7 @@
 module chandler.chandler;
 
 import std.array : array;
+import std.conv : to;
 import std.file : exists, getcwd;
 import std.path : buildPath;
 import std.regex : matchFirst, regex;

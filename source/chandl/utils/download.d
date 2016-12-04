@@ -3,7 +3,8 @@ module chandl.utils.download;
 import std.conv : to;
 import std.datetime : parseRFC822DateTime, SysTime;
 import std.file;
-import std.net.curl : download, get, HTTP;
+static import std.net.curl;
+import std.net.curl : HTTP;
 import std.path;
 
 enum LastModifiedHeader = "last-modified";

@@ -1,8 +1,11 @@
 module cli.ui.downloadprogressindicator;
 
-import dstatus.status;
-import dstatus.progress;
-import dstatus.terminal;
+import std.conv : text;
+import std.format : format;
+
+import dstatus.status : leftJustify, makeFixedWidth, Status;
+import dstatus.progress : makeProgressBar, makeStepCounter;
+import dstatus.terminal : getTerminalWidth;
 
 class DownloadProgressIndicator : Status {
     private {
