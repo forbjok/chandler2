@@ -1,4 +1,5 @@
 language: d
 
 d:
-  - dmd
+  - dmd-2.071.2
+  - ldc-1.1.0-beta5
