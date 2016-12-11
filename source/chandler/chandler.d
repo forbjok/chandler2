@@ -11,10 +11,10 @@ import chandl.components.downloadmanager;
 import chandler.project;
 
 version (Posix) {
-    enum ConfigFileName = ".chandler.json";
+    enum ConfigFileNames = [".chandler.yml", ".chandler.json"];
 }
 else version (Windows) {
-    enum ConfigFileName = "chandler.json";
+    enum ConfigFileNames = ["chandler.yml", "chandler.json"];
 }
 
 struct ChandlerConfig {
@@ -55,20 +55,60 @@ class Chandler {
         }
     }
 
-    void readConfig() {
+    private string findFirstExistingConfigFile() {
+        foreach(cfn; ConfigFileNames) {
+            auto configFilePath = buildPath(getUserHomeDir(), cfn);
+
+            if (exists(configFilePath))
+                return configFilePath;
+        }
+
+        return "";
+    }
+
+    private void loadJsonConfig(string filename) {
         import std.file : readText;
-        import jsonserialized;
+        import jsonserialized : deserializeFromJSONValue;
         import stdx.data.json : toJSONValue;
 
-        auto configPath = buildPath(getUserHomeDir(), ConfigFileName);
+        auto configJson = readText(filename);
+        auto configJsonValue = configJson.toJSONValue();
+        config.deserializeFromJSONValue(configJsonValue);
+    }
 
-        if (!configPath.exists()) {
+    private void loadYamlConfig(string filename) {
+        import yaml : Loader;
+        import yamlserialized : deserializeInto;
+
+        // Load YAML file into a Node
+        auto loader = Loader(filename);
+        auto node = loader.load();
+
+        // Deserialize Node into the config structure
+        node.deserializeInto(config);
+    }
+
+    void readConfig() {
+        import std.path : extension;
+        import std.string : empty;
+
+        auto configFilePath = findFirstExistingConfigFile();
+
+        if (configFilePath.empty) {
             return;
         }
 
-        auto configJson = readText(configPath);
-        auto configJsonValue = configJson.toJSONValue();
-        config.deserializeFromJSONValue(configJsonValue);
+        auto configExtension = extension(configFilePath);
+        switch (configExtension) {
+            case ".json":
+                loadJsonConfig(configFilePath);
+                break;
+            case ".yml":
+                loadYamlConfig(configFilePath);
+                break;
+            default:
+                break;
+        }
 
         // Perform tilde (user home directory) expansion for posix systems
         version (Posix) {
