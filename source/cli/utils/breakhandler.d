@@ -46,7 +46,7 @@ void handleBreak() {
             try {
                 callBreakHandlers();
             }
-            catch {
+            catch (Throwable) {
             }
 
             return TRUE;
