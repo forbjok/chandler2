@@ -28,6 +28,7 @@ For sites where this is supported (currently 4chan and Tinyboard-compatible site
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
   </metadata>
   <files>
+    <file src="tools\*" target="tools" />
     <file src="..\chandler.exe" target="tools" />
   </files>
 </package>
