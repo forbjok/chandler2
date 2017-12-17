@@ -107,7 +107,7 @@ class ThreadDownloader {
         _downloadExtensions ~= extension;
     }
 
-    void download() {
+    bool download() {
         const(char)[] html;
 
         bool success;
@@ -117,7 +117,7 @@ class ThreadDownloader {
         catch (ThreadNotFoundException) {
             // If the thread was not found, it must have 404'd - mark it as dead
             _isDead = true;
-            return;
+            return false;
         }
 
         /* When this scope exits successfully, fire downloadFiles().
@@ -130,10 +130,12 @@ class ThreadDownloader {
                 notChanged();
             }
 
-            return;
+            return false;
         }
 
         processHTML(html);
+
+        return true;
     }
 
     protected bool downloadThread(out const(char)[] html) {
