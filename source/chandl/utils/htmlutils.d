@@ -13,3 +13,16 @@ string readHTML(in string filename) {
         return read(filename).to!string;
     }
 }
+
+const(char)[] purgeScripts(in const(char)[] html) {
+    import html : createDocument;
+
+    // Parse HTML
+    auto document = createDocument(html);
+
+    foreach(e; document.querySelectorAll("script", document.root)) {
+        e.destroy();
+    }
+
+    return document.root.html;
+}

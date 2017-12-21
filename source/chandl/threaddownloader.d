@@ -221,6 +221,9 @@ class ThreadDownloader {
             outputHTML = thread.getHtml();
         }
 
+        // Purge scripts
+        outputHTML = purgeScripts(outputHTML);
+
         // Write resulting HTML to output file
         std.file.write(_threadHTMLPath, outputHTML);
     }
