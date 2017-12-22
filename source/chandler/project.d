@@ -37,6 +37,7 @@ struct ProjectState {
     }
 
     string lastModified;
+    bool isDead;
     LinkState links;
 }
 
@@ -230,6 +231,7 @@ class ChandlerProject : ThreadDownloader {
         // Get current state
         ProjectState state;
         state.lastModified = _lastModified.toISOExtString();
+        state.isDead = _isDead;
         state.links.failed = failedFiles.map!(f => f.url).array();
 
         // Serialize state to JSON
@@ -261,6 +263,9 @@ class ChandlerProject : ThreadDownloader {
             // Presumably the date string in the state file was invalid or blank
             // We can safely ignore this.
         }
+
+        // Restore dead status
+        _isDead = state.isDead;
 
         failedFiles = state.links.failed
             .map!(url => DownloadFile(url, buildPath(path, mapURL(url))))

@@ -70,6 +70,6 @@ abstract class MergingThread : IThread {
             }
         }
 
-        return UpdateResult(newPostsIds, newLinks);
+        return UpdateResult(newPostsIds, newLinks, updateThread.isDead());
     }
 }

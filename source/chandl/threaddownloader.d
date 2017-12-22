@@ -47,12 +47,12 @@ class ThreadDownloader {
         string _threadHTMLPath;
         IThreadParser _parser;
         string[] _downloadExtensions = defaultDownloadExtensions;
-        bool _isDead = false;
     }
 
     protected {
         DownloadFile[] filesToDownload;
         DownloadFile[] failedFiles;
+        bool _isDead = false;
     }
 
     @property string url() {
@@ -204,6 +204,9 @@ class ThreadDownloader {
             // Process new links
             this.processLinks(updateResult.newLinks);
 
+            // Update dead status
+            _isDead = updateResult.isDead;
+
             if (this.threadUpdated !is null)
                 this.threadUpdated(updateResult);
 
@@ -217,6 +220,9 @@ class ThreadDownloader {
 
             // Process links
             this.processLinks(links);
+
+            // Update dead status
+            _isDead = thread.isDead;
 
             outputHTML = thread.getHtml();
         }

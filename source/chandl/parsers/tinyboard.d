@@ -104,6 +104,10 @@ class TinyboardThread : MergingThread {
     override MergingThread parseThread(in const(char)[] html) {
         return new TinyboardThread(html);
     }
+
+    bool isDead() {
+        return false;
+    }
 }
 
 class TinyboardThreadParser : IThreadParser {

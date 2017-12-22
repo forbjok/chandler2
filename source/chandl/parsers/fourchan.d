@@ -61,6 +61,10 @@ class FourChanThread : MergingThread {
     override MergingThread parseThread(in const(char)[] html) {
         return new FourChanThread(html);
     }
+
+    bool isDead() {
+        return this._document.querySelector("img.archivedIcon", this._threadNode) != null;
+    }
 }
 
 class FourChanThreadParser : IThreadParser {

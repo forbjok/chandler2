@@ -5,6 +5,7 @@ interface IThread {
     ILink[] getLinks();
 
     UpdateResult update(in const(char)[] newHtml);
+    bool isDead();
 }
 
 interface ILink {
@@ -22,6 +23,7 @@ interface IThreadParser {
 struct UpdateResult {
     ulong[] newPosts;
     ILink[] newLinks;
+    bool isDead;
 }
 
 class ThreadParseException : Exception {

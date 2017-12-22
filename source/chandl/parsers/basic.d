@@ -30,6 +30,10 @@ class BasicThread : IThread {
         // Update not supported
         throw new Exception("Update not supported.");
     }
+
+    bool isDead() {
+        return false;
+    }
 }
 
 class BasicThreadParser : IThreadParser {
