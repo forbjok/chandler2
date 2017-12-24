@@ -37,6 +37,7 @@ void handleBreak() {
         sa.sa_flags = 0;
 
         sigaction(SIGINT, &sa, null);
+        sigaction(SIGTERM, &sa, null);
     }
     else version (Windows) {
         import core.sys.windows.windef;
