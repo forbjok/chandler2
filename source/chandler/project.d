@@ -115,6 +115,10 @@ class ChandlerProject : ThreadDownloader {
     }
 
     override void downloadFiles() {
+        /* Save state before AND after downloading files to ensure
+           that the file list is saved in case of a non-graceful exit
+           during download. */
+        saveState();
         super.downloadFiles();
         saveState();
     }
