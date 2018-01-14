@@ -60,7 +60,7 @@ abstract class MergingThread : IThread {
                 auto updatePost = updateThread.getPost(newPostId);
 
                 // Clone the new post into this HTML document
-                auto newPost = _document.clone(updatePost);
+                auto newPost = _document.cloneNode(updatePost);
 
                 // Append new post to thread
                 appendPost(newPost);

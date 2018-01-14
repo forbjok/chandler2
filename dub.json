@@ -7,7 +7,7 @@
     "reurl": "~>0.0.2",
     "jsonserialized": "~>0.2.0",
     "dstatus": "~>0.0.3",
-    "htmld": "~>0.2.16",
+    "htmld": "~>0.2.19",
     "std_data_json": "~>0.18.2",
     "dunit": "~>1.0.14",
     "dyaml": "~>0.6.3",
