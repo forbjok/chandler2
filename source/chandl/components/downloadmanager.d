@@ -2,7 +2,7 @@ module chandl.components.downloadmanager;
 
 import std.conv : text;
 static import std.file;
-import std.path : exists;
+import std.file : exists;
 import std.range : chain;
 
 import chandl.utils.download;

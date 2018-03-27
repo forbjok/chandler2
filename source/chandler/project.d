@@ -6,9 +6,10 @@ import std.algorithm.sorting : sort;
 import std.array : array;
 import std.conv : text, to;
 import std.datetime : Clock, SysTime, UTC;
-import std.file;
+static import std.file;
+import std.file : dirEntries, exists, mkdirRecurse, readText, SpanMode, write;
 import std.format;
-import std.path : absolutePath, baseName, buildPath, exists;
+import std.path : absolutePath, baseName, buildPath;
 
 import jsonserialized;
 import stdx.data.json;

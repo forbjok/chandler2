@@ -2,8 +2,9 @@ module cli.ui.downloadprogressindicator;
 
 import std.conv : text;
 import std.format : format;
+import std.string : leftJustify;
 
-import dstatus.status : leftJustify, makeFixedWidth, Status;
+import dstatus.status : makeFixedWidth, Status;
 import dstatus.progress : makeProgressBar, makeStepCounter;
 import dstatus.terminal : getTerminalWidth;
 
