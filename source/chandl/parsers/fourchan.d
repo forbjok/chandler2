@@ -11,7 +11,7 @@ import chandl.parsers.mergingparser;
 
 class FourChanThread : MergingThread {
     private {
-        Node* _threadNode;
+        Node _threadNode;
     }
 
     this(in const(char)[] html) {
@@ -22,16 +22,15 @@ class FourChanThread : MergingThread {
             throw new ThreadParseException("Could not locate thread element.");
     }
 
-    override Node*[] getAllPosts() {
+    override Node[] getAllPosts() {
         // Get all post containers inside the thread node (which should be all posts)
         auto posts = this._document.querySelectorAll("div.postContainer", this._threadNode)
-            .map!(p => cast(Node*) p)
             .array();
 
         return posts;
     }
 
-    override Node* getPost(in ulong id) {
+    override Node getPost(in ulong id) {
         import std.format;
 
         // Query post container element by ID
@@ -40,7 +39,7 @@ class FourChanThread : MergingThread {
         return postNode;
     }
 
-    override ulong getPostId(in Node* postElement) {
+    override ulong getPostId(in Node postElement) {
         import std.regex;
 
         auto re = regex(`pc(\d+)`);
@@ -53,7 +52,7 @@ class FourChanThread : MergingThread {
         return m[1].to!int;
     }
 
-    override void appendPost(Node* newPostElement) {
+    override void appendPost(Node newPostElement) {
         // Append the new post to the thread node
         _threadNode.appendChild(newPostElement);
     }
@@ -63,7 +62,7 @@ class FourChanThread : MergingThread {
     }
 
     bool isDead() {
-        return this._document.querySelector("img.archivedIcon", this._threadNode) != null;
+        return this._document.querySelector("img.archivedIcon", this._threadNode) !is null;
     }
 }
 

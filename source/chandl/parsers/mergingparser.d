@@ -18,14 +18,14 @@ abstract class MergingThread : IThread {
         _document = createDocument(html);
     }
 
-    protected abstract Node*[] getAllPosts();
-    protected abstract Node* getPost(in ulong id);
-    protected abstract ulong getPostId(in Node* postElement);
-    protected abstract void appendPost(Node* newPostElement);
+    protected abstract Node[] getAllPosts();
+    protected abstract Node getPost(in ulong id);
+    protected abstract ulong getPostId(in Node postElement);
+    protected abstract void appendPost(Node newPostElement);
     protected abstract MergingThread parseThread(in const(char)[] html);
 
     ILink[] getLinks() {
-        auto links = findLinks(&_document, _document.root);
+        auto links = findLinks(_document, _document.root);
         return links;
     }
 
@@ -66,7 +66,7 @@ abstract class MergingThread : IThread {
                 appendPost(newPost);
 
                 // Find links in the newly appended post and add them to the list
-                newLinks ~= findLinks(&_document, newPost);
+                newLinks ~= findLinks(_document, newPost);
             }
         }
 

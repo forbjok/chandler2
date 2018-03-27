@@ -9,7 +9,7 @@ import html;
 import chandl.threadparser;
 import chandl.parsers.mergingparser;
 
-private bool hasClass(in Node* node, in string cls) {
+private bool hasClass(in Node node, in string cls) {
     auto classes = node.attr("class").split();
     if (classes.canFind(cls)) {
         return true;
@@ -20,8 +20,8 @@ private bool hasClass(in Node* node, in string cls) {
 
 class TinyboardThread : MergingThread {
     private {
-        Node* _threadNode;
-        Node* _lastPostElement;
+        Node _threadNode;
+        Node _lastPostElement;
     }
 
     this(in const(char)[] html) {
@@ -48,16 +48,15 @@ class TinyboardThread : MergingThread {
             throw new ThreadParseException("Could not locate last post element.");
     }
 
-    override Node*[] getAllPosts() {
+    override Node[] getAllPosts() {
         // Get all post containers inside the thread node (which should be all posts)
         auto posts = _document.querySelectorAll("div.post", _threadNode)
-            .map!(p => cast(Node*) p)
             .array();
 
         return posts;
     }
 
-    override Node* getPost(in ulong id) {
+    override Node getPost(in ulong id) {
         import std.format;
 
         if (id == 0) {
@@ -70,7 +69,7 @@ class TinyboardThread : MergingThread {
         return postNode;
     }
 
-    override ulong getPostId(in Node* postElement) {
+    override ulong getPostId(in Node postElement) {
         import std.regex;
 
         auto re = regex(`reply_(\d+)`);
@@ -89,7 +88,7 @@ class TinyboardThread : MergingThread {
         return m[1].to!int;
     }
 
-    override void appendPost(Node* newPostElement) {
+    override void appendPost(Node newPostElement) {
         // Create and insert a <br> after the current last post
         auto brElement = _document.createElement("br");
         brElement.insertAfter(_lastPostElement);

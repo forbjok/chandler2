@@ -10,7 +10,6 @@ import chandl.utils.linkfinder;
 class BasicThread : IThread {
     private {
         Document _document;
-        Node* _threadNode;
     }
 
     this(in const(char)[] html) {
@@ -18,7 +17,7 @@ class BasicThread : IThread {
     }
 
     ILink[] getLinks() {
-        auto links = findLinks(&_document, _document.root);
+        auto links = findLinks(_document, _document.root);
         return links;
     }
 

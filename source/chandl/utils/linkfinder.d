@@ -22,11 +22,11 @@ enum LinkTags = [
 
 
 private class Link : ILink {
-    private Node* _node;
+    private Node _node;
     private string _attr;
     private string _originalValue;
 
-    this(Node* node, in string attr) {
+    this(Node node, in string attr) {
         _node = node;
         _attr = attr;
         _originalValue = _node.attr(_attr).to!string;
@@ -69,10 +69,10 @@ private bool isFileLink(in string link) {
     return true;
 }
 
-ILink[] findLinks(Document* document, Node* node) {
+ILink[] findLinks(Document document, Node node) {
     ILink[] links;
 
-    void addLink(Node* node, in string attrname) {
+    void addLink(Node node, in string attrname) {
         auto url = node.attr(attrname).to!string;
 
         /* Filter "trash" links, such as:

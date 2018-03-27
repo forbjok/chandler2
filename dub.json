@@ -1,13 +1,13 @@
 {
   "name": "chandler",
   "description": "A thread downloader for imageboards.",
-  "copyright": "Copyright © 2016-2017, Kjartan F. Kvamme",
+  "copyright": "Copyright © 2016-2018, Kjartan F. Kvamme",
   "authors": ["Kjartan F. Kvamme"],
   "dependencies": {
     "reurl": "~>0.0.2",
     "jsonserialized": "~>0.2.0",
     "dstatus": "~>0.0.3",
-    "htmld": "~>0.2.19",
+    "htmld": "~>0.3.2",
     "std_data_json": "~>0.18.2",
     "dunit": "~>1.0.14",
     "dyaml": "~>0.6.3",
