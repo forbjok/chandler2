@@ -15,12 +15,24 @@ string readHTML(in string filename) {
 }
 
 const(char)[] purgeScripts(in const(char)[] html) {
-    import html : createDocument;
+    import html : createDocument, Node;
 
     // Parse HTML
     auto document = createDocument(html);
 
+    /* Instead of destroying elements directly while iterating, we store them all
+       in an array and destroy them afterwards.
+
+       This is done because destroying them during iteration causes a segfault
+       in newer versions of "htmld". (0.3.1+) */
+
+    Node[] nodesToDestroy;
+
     foreach(e; document.querySelectorAll("script", document.root)) {
+        nodesToDestroy ~= e;
+    }
+
+    foreach(e; nodesToDestroy) {
         e.destroy();
     }
 
