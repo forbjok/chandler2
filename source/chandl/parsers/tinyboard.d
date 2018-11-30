@@ -128,14 +128,14 @@ unittest {
     import dunit.toolkit;
 
     // A single post
-    enum testHTML1 = `<div id="thread_1"><div class="post op"></div><br><br><hr></div>`;
+    enum testHTML1 = `<div id=thread_1><div class="post op"></div><br><br><hr></div>`;
 
     // Two posts
-    enum testHTML2 = `<div id="thread_1"><div class="post op"></div><br><div id="reply_2" class="post reply"></div><br><br><hr></div>`;
+    enum testHTML2 = `<div id=thread_1><div class="post op"></div><br><div id=reply_2 class="post reply"></div><br><br><hr></div>`;
 
     // The second post has been deleted, and a third new one added
-    enum testHTML3 = `<div id="thread_1"><div class="post op"></div><br><div id="reply_3" class="post reply"></div><br><br><hr></div>`;
-    enum testHTML3Merged = `<div id="thread_1"><div class="post op"></div><br><div id="reply_2" class="post reply"></div><br><div id="reply_3" class="post reply"></div><br><br><hr></div>`;
+    enum testHTML3 = `<div id=thread_1><div class="post op"></div><br><div id=reply_3 class="post reply"></div><br><br><hr></div>`;
+    enum testHTML3Merged = `<div id=thread_1><div class="post op"></div><br><div id=reply_2 class="post reply"></div><br><div id=reply_3 class="post reply"></div><br><br><hr></div>`;
 
     // Parse HTML1
     auto thread = new TinyboardThread(testHTML1);

@@ -85,14 +85,14 @@ unittest {
     import dunit.toolkit;
 
     // A single post
-    enum testHTML1 = `<div class="thread"><div id="pc100001" class="postContainer"></div></div>`;
+    enum testHTML1 = `<div class=thread><div id=pc100001 class=postContainer></div></div>`;
 
     // Two posts
-    enum testHTML2 = `<div class="thread"><div id="pc100001" class="postContainer"></div><div id="pc100002" class="postContainer"></div></div>`;
+    enum testHTML2 = `<div class=thread><div id=pc100001 class=postContainer></div><div id=pc100002 class=postContainer></div></div>`;
 
     // The second post has been deleted, and a third new one added
-    enum testHTML3 = `<div class="thread"><div id="pc100001" class="postContainer"></div><div id="pc100003" class="postContainer"></div></div>`;
-    enum testHTML3Merged = `<div class="thread"><div id="pc100001" class="postContainer"></div><div id="pc100002" class="postContainer"></div><div id="pc100003" class="postContainer"></div></div>`;
+    enum testHTML3 = `<div class=thread><div id=pc100001 class=postContainer></div><div id=pc100003 class=postContainer></div></div>`;
+    enum testHTML3Merged = `<div class=thread><div id=pc100001 class=postContainer></div><div id=pc100002 class=postContainer></div><div id=pc100003 class=postContainer></div></div>`;
 
     // Parse HTML1
     auto thread = new FourChanThread(testHTML1);
