@@ -38,7 +38,7 @@ class BasicThread : IThread {
 class BasicThreadParser : IThreadParser {
     static this() {
         import chandl.parsers;
-        registerParser("basic", new this());
+        registerParser("basic", new typeof(this)());
     }
 
     @property bool supportsUpdate() {

@@ -112,7 +112,7 @@ class TinyboardThread : MergingThread {
 class TinyboardThreadParser : IThreadParser {
     static this() {
         import chandl.parsers;
-        registerParser("tinyboard", new this());
+        registerParser("tinyboard", new typeof(this)());
     }
 
     @property bool supportsUpdate() {

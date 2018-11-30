@@ -69,7 +69,7 @@ class FourChanThread : MergingThread {
 class FourChanThreadParser : IThreadParser {
     static this() {
         import chandl.parsers;
-        registerParser("4chan", new this());
+        registerParser("4chan", new typeof(this)());
     }
 
     @property bool supportsUpdate() {
