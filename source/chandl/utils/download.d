@@ -38,6 +38,10 @@ class FileDownloader {
 
     this(in string url) {
         _url = url;
+
+        // Set default callback functions
+        cancellationCallback = () { return false; };
+        onProgress = (c, t) { };
     }
 
     void setIfModifiedSince(in SysTime timestamp) {
@@ -61,12 +65,10 @@ class FileDownloader {
 
         auto http = HTTP();
 
-        if (onProgress !is null) {
-            http.onProgress = (dlTotal, dlNow, ulTotal, ulNow) {
-                onProgress(dlNow, dlTotal);
-                return cancellationCallback() ? 1 : 0;
-            };
-        }
+        http.onProgress = (dlTotal, dlNow, ulTotal, ulNow) {
+            onProgress(dlNow, dlTotal);
+            return cancellationCallback() ? 1 : 0;
+        };
 
         if (_useIfModifiedSince) {
             // I'd use setTimeCondition, but it appears to be broken, so manual addRequestHeader it is.
