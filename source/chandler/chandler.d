@@ -77,11 +77,11 @@ class Chandler {
     }
 
     private void loadYamlConfig(string filename) {
-        import yaml : Loader;
+        import dyaml : Loader;
         import yamlserialized : deserializeInto;
 
         // Load YAML file into a Node
-        auto loader = Loader(filename);
+        auto loader = Loader.fromFile(filename);
         auto node = loader.load();
 
         // Deserialize Node into the config structure
