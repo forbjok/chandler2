@@ -11,10 +11,10 @@ import chandl.components.downloadmanager;
 import chandler.project;
 
 version (Posix) {
-    enum ConfigFileNames = [".chandler.yml", ".chandler.json"];
+    static immutable ConfigFileNames = [".chandler.yml", ".chandler.json"];
 }
 else version (Windows) {
-    enum ConfigFileNames = ["chandler.yml", "chandler.json"];
+    static immutable ConfigFileNames = ["chandler.yml", "chandler.json"];
 }
 
 struct ChandlerConfig {
@@ -47,7 +47,7 @@ class Chandler {
 
         with (config) {
             downloadPath = buildPath(getDocumentsDirectory(), "threads");
-            config.downloadExtensions = defaultDownloadExtensions;
+            config.downloadExtensions = defaultDownloadExtensions.dup;
 
             sites = [
                 "boards.4chan.org": ChandlerConfig.Site(`https?://([\w\.]+)/(\w+)/thread/(\d+)`, "4chan"),

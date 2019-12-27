@@ -14,7 +14,7 @@ import chandl.utils.download;
 import chandl.utils.htmlutils;
 import chandl.utils.linkfilter;
 
-enum defaultDownloadExtensions = [
+static immutable defaultDownloadExtensions = [
     "ico",
     "css",
     "png",
