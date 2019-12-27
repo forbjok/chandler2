@@ -5,13 +5,13 @@
   "authors": ["Kjartan F. Kvamme"],
   "dependencies": {
     "reurl": "~>0.0.2",
-    "jsonserialized": "~>0.2.0",
+    "jsonserialized": "~>0.2.1",
     "dstatus": "~>0.0.3",
-    "htmld": "~>0.3.2",
-    "std_data_json": "~>0.18.2",
-    "dunit": "~>1.0.14",
-    "dyaml": "~>0.7.1",
-    "yamlserialized": "~>0.4.0"
+    "htmld": "~>0.3.7",
+    "std_data_json": "~>0.18.3",
+    "dunit": "~>1.0.15",
+    "dyaml": "~>0.8.0",
+    "yamlserialized": "~>0.5.0"
   },
   "stringImportPaths": ["."]
 }
